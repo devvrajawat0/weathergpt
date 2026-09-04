@@ -450,7 +450,9 @@ export async function fetchAlerts(state?: string, country?: string): Promise<{ s
 }
 
 const ALIASES: Record<string, string> = {
+  'dilli': 'new delhi',
   'delhi': 'new delhi',
+  'banglore': 'bengaluru',
   'bangalore': 'bengaluru',
   'bombay': 'mumbai',
   'calcutta': 'kolkata',
@@ -618,14 +620,30 @@ async function geocodeLocationOnline(name: string): Promise<LocationItem | null>
   return null;
 }
 
-export async function resolveTargetLocations(lastUserMsg: string, currentLocation?: LocationItem | null): Promise<LocationItem[]> {
-  // 1. Local dataset match
-  let targetLocations = findLocationsInText(lastUserMsg);
+export async function resolveTargetLocations(lastUserMsg: string): Promise<LocationItem[]> {
+  const candidates = extractLocationCandidates(lastUserMsg);
+  let targetLocations: LocationItem[] = [];
 
-  // 2. Open-Meteo Geocoding API for dynamic city lookup
+  if (candidates.length >= 2) {
+    for (const cand of candidates) {
+      const locs = findLocationsInText(cand);
+      if (locs.length > 0) {
+        if (!targetLocations.some(t => t.id === locs[0].id)) {
+          targetLocations.push(locs[0]);
+        }
+      } else {
+        const geo = await geocodeLocationOnline(cand);
+        if (geo) targetLocations.push(geo);
+      }
+    }
+  }
+
   if (targetLocations.length === 0) {
-    const candidates = extractLocationCandidates(lastUserMsg);
-    for (const candidate of candidates.slice(0, 2)) {
+    targetLocations = findLocationsInText(lastUserMsg);
+  }
+
+  if (targetLocations.length === 0 && candidates.length > 0) {
+    for (const candidate of candidates.slice(0, 3)) {
       const geoLoc = await geocodeLocationOnline(candidate);
       if (geoLoc && !targetLocations.some(t => Math.hypot(t.lat - geoLoc.lat, t.lon - geoLoc.lon) < 0.1)) {
         targetLocations.push(geoLoc);
@@ -633,17 +651,15 @@ export async function resolveTargetLocations(lastUserMsg: string, currentLocatio
     }
   }
 
-  // 3. Fallback to current dashboard location or Bhopal
-  if (targetLocations.length === 0) {
-    if (currentLocation && currentLocation.lat && currentLocation.lon) {
-      targetLocations.push(currentLocation);
-    } else {
-      const bhopal = INDIAN_DISTRICTS.find(d => d.name.includes("Bhopal")) || INDIAN_DISTRICTS[0];
-      targetLocations.push(bhopal);
+  const uniqueLocations: LocationItem[] = [];
+  for (const loc of targetLocations) {
+    if (!uniqueLocations.some(u => u.name === loc.name || Math.hypot(u.lat - loc.lat, u.lon - loc.lon) < 0.2)) {
+      uniqueLocations.push(loc);
     }
   }
 
-  return targetLocations;
+  // STEP 1 RULE: If NO location is found in the message, do not guess or default — return [] so caller asks "Which city would you like weather for?"
+  return uniqueLocations;
 }
 
 export async function sendChatMessage(
@@ -688,7 +704,7 @@ export async function sendChatMessage(
 
   if (weatherContexts.length === 0) {
     return {
-      reply: "⚠️ I couldn't fetch live weather data for the specified location right now. Please try searching for a city or district (e.g. Gwalior, Agra, Bhopal, Manali, Jaipur, Delhi, Tokyo).",
+      reply: "Which city would you like weather for?",
       locations: [],
       weatherData: []
     };

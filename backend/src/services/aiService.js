@@ -13,7 +13,9 @@ if (process.env.ANTHROPIC_API_KEY) {
 }
 
 const ALIASES = {
+  'dilli': 'new delhi',
   'delhi': 'new delhi',
+  'banglore': 'bengaluru',
   'bangalore': 'bengaluru',
   'bombay': 'mumbai',
   'calcutta': 'kolkata',
@@ -174,11 +176,29 @@ async function geocodeLocationOnline(name) {
 }
 
 export async function resolveTargetLocations(lastUserMsg, currentLocation = null) {
-  let targetLocations = findLocationsInText(lastUserMsg);
+  const candidates = extractLocationCandidates(lastUserMsg);
+  let targetLocations = [];
+
+  if (candidates.length >= 2) {
+    for (const cand of candidates) {
+      const locs = findLocationsInText(cand);
+      if (locs.length > 0) {
+        if (!targetLocations.some(t => t.id === locs[0].id)) {
+          targetLocations.push(locs[0]);
+        }
+      } else {
+        const geo = await geocodeLocationOnline(cand);
+        if (geo) targetLocations.push(geo);
+      }
+    }
+  }
 
   if (targetLocations.length === 0) {
-    const candidates = extractLocationCandidates(lastUserMsg);
-    for (const candidate of candidates.slice(0, 2)) {
+    targetLocations = findLocationsInText(lastUserMsg);
+  }
+
+  if (targetLocations.length === 0 && candidates.length > 0) {
+    for (const candidate of candidates.slice(0, 3)) {
       const geoLoc = await geocodeLocationOnline(candidate);
       if (geoLoc && !targetLocations.some(t => Math.hypot(t.lat - geoLoc.lat, t.lon - geoLoc.lon) < 0.1)) {
         targetLocations.push(geoLoc);
@@ -186,16 +206,15 @@ export async function resolveTargetLocations(lastUserMsg, currentLocation = null
     }
   }
 
-  if (targetLocations.length === 0) {
-    if (currentLocation && currentLocation.lat && currentLocation.lon) {
-      targetLocations.push(currentLocation);
-    } else {
-      const bhopal = INDIAN_DISTRICTS.find(d => d.name.includes("Bhopal")) || INDIAN_DISTRICTS[0];
-      targetLocations.push(bhopal);
+  const uniqueLocations = [];
+  for (const loc of targetLocations) {
+    if (!uniqueLocations.some(u => u.name === loc.name || Math.hypot(u.lat - loc.lat, u.lon - loc.lon) < 0.2)) {
+      uniqueLocations.push(loc);
     }
   }
 
-  return targetLocations;
+  // STEP 1 RULE: If NO location is found in the message, do not guess or default — return [] so caller asks "Which city would you like weather for?"
+  return uniqueLocations;
 }
 
 /**
@@ -206,6 +225,14 @@ export async function processChatQuery(messages, currentLocation = null) {
 
   // 1. Identify locations mentioned in query (with online geocoding fallback)
   let targetLocations = await resolveTargetLocations(lastUserMsg, currentLocation);
+
+  if (targetLocations.length === 0) {
+    return {
+      reply: "Which city would you like weather for?",
+      locations: [],
+      weatherData: []
+    };
+  }
 
   // 2. Fetch live weather context for up to 2 target locations
   const weatherContexts = [];
@@ -222,21 +249,52 @@ export async function processChatQuery(messages, currentLocation = null) {
     }
   }
 
+  if (weatherContexts.length === 0) {
+    return {
+      reply: "Which city would you like weather for?",
+      locations: [],
+      weatherData: []
+    };
+  }
+
   // 3. If Anthropic client exists, call Claude API with live context
   if (anthropicClient && process.env.ANTHROPIC_API_KEY) {
     try {
-      const systemPrompt = `You are WeatherGPT, an expert AI Weather Assistant designed for forecasting, climate explanations, agricultural advice, clothing/travel recommendations, and location comparison.
-      
-Real live weather data fetched for the user's query:
-${JSON.stringify(weatherContexts, null, 2)}
+      const systemPrompt = `You are WeatherGPT, a natural-language weather assistant for Indian districts and world capitals.
 
-Instructions:
-- Respond in a warm, concise, professional, conversational tone.
-- Use clean Markdown with bullet points, bold text, and clear sections.
-- When answering weather questions ("Will it rain in Bhopal tomorrow?"), reference exact temperatures (°C), precipitation %, humidity, AQI, and wind speeds from the provided live weather data.
-- Offer practical advice: Clothing recommendations, Outdoor/Travel tips, and Agricultural/Farmer advisories when relevant.
-- Compare locations side-by-side if multiple locations are mentioned.
-- Keep responses informative and clear. Always include a brief note if severe conditions exist.`;
+STEP 1 — LOCATION EXTRACTION (always do this first, before anything else):
+- Scan the user's message and extract every location name mentioned — Indian districts/cities (e.g. Bhopal, Manali, Wayanad, Jaipur, Agra, Gwalior) or World Capitals (e.g. Tokyo, Paris, London, Washington).
+- Standardize alternative spellings to canonical names (e.g. "Dilli" → Delhi, "Banglore" → Bengaluru, "Bombay" → Mumbai, "Calcutta" → Kolkata).
+- If multiple locations are extracted (e.g. "Delhi and Tokyo", "compare Bhopal vs Jaipur"), keep ALL of them in order.
+- If no city is found in the message: Do NOT guess or default. Return asking: "Which city would you like weather for?"
+
+STEP 2 — INTENT CLASSIFICATION:
+Classify user query into:
+- COMPARISON (2+ cities requested)
+- FORECAST (multi-day outlook, rain probability, upcoming weather)
+- CLOTHING / OUTDOOR ADVICE (what to wear, umbrella needed, activity safety)
+- FARMING / AGRI ADVICE (irrigation, spraying, harvest warnings)
+- GENERAL_OVERVIEW (standard current weather query)
+
+STEP 3 — DATA FETCHING & SYNTHESIS:
+Use fetched Open-Meteo weather JSON. Extract:
+- Temperature (°C), Feels-like (°C)
+- Condition (Sunny, Rain, Thunderstorm, Fog, Clear)
+- Humidity (%), Wind Speed (km/h)
+- AQI (US AQI value + Severity label)
+- Daily High/Low and Rain Probability (%) for forecast queries
+
+STEP 4 — RESPONSE FORMATTING:
+- Single city: Return clean structured markdown with Current Conditions, Key Metrics, and Advice.
+- Multi-city: Return markdown table comparing Temperature, Condition, Humidity, Wind Speed, AQI, and Precipitation side by side, followed by a recommendation.
+- Forecast: Return 3 to 7 day breakdown table with High/Low temperatures and Rain Probability %.
+
+STEP 5 — GUARDRAILS & SCHEMAS:
+- Strict output format in JSON wrapper when requested, or clear readable markdown.
+- Never hardcode or fallback to Bhopal or any city unless explicitly named in user input.
+
+Real live weather data fetched for the user's query:
+${JSON.stringify(weatherContexts, null, 2)}`;
 
       const formattedMessages = messages.map(m => ({
         role: m.role === 'user' ? 'user' : 'assistant',
@@ -250,7 +308,7 @@ Instructions:
         messages: formattedMessages
       });
 
-      const replyText = response.content[0]?.text || "I'm sorry, I couldn't process your request.";
+      const replyText = response.content[0]?.text || "Which city would you like weather for?";
       return {
         reply: replyText,
         locations: weatherContexts.map(w => w.locObj),
