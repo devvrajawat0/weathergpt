@@ -108,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Indian District (e.g. Bhopal, Wayanad) or World Capital..."
+              placeholder="Search Indian District (e.g. Delhi, Wayanad) or World Capital..."
               className="w-full bg-slate-900/90 text-slate-100 text-sm placeholder-slate-400 rounded-full pl-10 pr-10 py-2 border border-slate-700/60 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 transition-all"
             />
             <button

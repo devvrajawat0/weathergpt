@@ -23,13 +23,13 @@ const queryClient = new QueryClient({
   },
 });
 
-// Default Location: Bhopal, Madhya Pradesh
+// Default Location: New Delhi, National Capital Territory
 const DEFAULT_LOCATION: LocationItem = {
-  id: 'in-mp-1',
-  name: 'Bhopal',
-  state: 'Madhya Pradesh',
-  lat: 23.2599,
-  lon: 77.4126,
+  id: 'in-dl-1',
+  name: 'New Delhi',
+  state: 'Delhi',
+  lat: 28.6139,
+  lon: 77.2090,
   type: 'district'
 };
 

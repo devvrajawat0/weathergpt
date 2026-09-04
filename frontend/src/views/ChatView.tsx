@@ -16,7 +16,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
     {
       id: 'welcome-1',
       role: 'assistant',
-      content: `Hello! I am **WeatherGPT** 🌤️, your conversational weather assistant.\n\nYou can ask me natural language questions for any district of India or world capital, like:\n- *"Will it rain in Gwalior tomorrow?"*\n- *"What is the weather in Agra today?"*\n- *"Compare Gwalior and Bhopal"*\n- *"What should I wear in Manali today?"*\n- *"Agricultural weather advice for Punjab farmers"*`,
+      content: `Hello! I am **WeatherGPT** 🌤️, your conversational weather assistant.\n\nYou can ask me natural language questions for any district of India or world capital, like:\n- *"Will it rain in Delhi tomorrow?"*\n- *"What is the weather in Agra today?"*\n- *"Compare Delhi and Tokyo"*\n- *"What should I wear in Manali today?"*\n- *"Agricultural weather advice for Punjab farmers"*`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -327,10 +327,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
             </button>
           ))}
           <button
-            onClick={() => handleSend("Compare Gwalior and Bhopal")}
+            onClick={() => handleSend("Compare Delhi and Tokyo")}
             className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-500/40 hover:to-blue-500/40 text-cyan-200 border border-cyan-500/40 transition font-semibold"
           >
-            ⚔️ Compare Gwalior & Bhopal
+            ⚔️ Compare Delhi & Tokyo
           </button>
         </div>
       </div>

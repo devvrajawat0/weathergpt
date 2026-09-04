@@ -17,8 +17,8 @@ router.get('/forecast', async (req, res) => {
     let targetLon = parseFloat(lon);
 
     if (isNaN(targetLat) || isNaN(targetLon)) {
-      // Default to Bhopal if lat/lon not provided
-      const defaultLoc = INDIAN_DISTRICTS.find(d => d.name.includes('Bhopal')) || INDIAN_DISTRICTS[0];
+      // Default to New Delhi if lat/lon not provided
+      const defaultLoc = INDIAN_DISTRICTS.find(d => d.name.includes('Delhi')) || INDIAN_DISTRICTS[0];
       targetLat = defaultLoc.lat;
       targetLon = defaultLoc.lon;
     }
