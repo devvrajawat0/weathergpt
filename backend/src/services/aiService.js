@@ -122,9 +122,12 @@ const STOP_WORDS = new Set([
 
 function extractLocationCandidates(text) {
   const candidates = [];
-  const lower = text.toLowerCase();
+  let cleanText = text.toLowerCase().replace(/^(?:plan\s+a\s+trip\s+to|trip\s+to|travel\s+to|vacation\s+in|visit|tour|itinerary\s+for)\s+/i, '').trim();
 
-  const compareMatch = lower.match(/(?:compare|between)?\s*([a-z\s]+?)\s*(?:\bvs\b|\bv\/s\b|\band\b|\bwith\b|\bor\b|,)\s*([a-z\s]+)/i);
+  // Explicit comparison check: must have compare, between, vs, v/s, versus, or explicit 'and' between cities
+  const compareMatch = cleanText.match(/(?:compare|between)\s+([a-z\s]+?)\s+(?:and|vs|v\/s|with)\s+([a-z\s]+)/i)
+    || cleanText.match(/([a-z\s]+?)\s+(?:\bvs\b|\bv\/s\b|\bversus\b)\s+([a-z\s]+)/i);
+
   if (compareMatch) {
     const c1 = compareMatch[1].replace(/^(?:compare|between|weather|forecast|in|for|at|about)\s+/i, '').split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
     const c2 = compareMatch[2].replace(/(?:weather|forecast|today|tomorrow|now)$/i, '').split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
@@ -132,17 +135,19 @@ function extractLocationCandidates(text) {
     if (c2.length >= 2) candidates.push(c2);
   }
 
-  const prepMatches = lower.match(/(?:in|at|for|near|around|of|about)\s+([a-z\s]+?)(?:\s+(?:today|tomorrow|now|yesterday|forecast|weather|rain|temperature|this|next)|$)/gi);
-  if (prepMatches) {
-    for (const match of prepMatches) {
-      const clean = match.replace(/^(in|at|for|near|around|of|about)\s+/i, '').trim();
-      const filtered = clean.split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
-      if (filtered.length >= 2) candidates.push(filtered);
+  if (candidates.length === 0) {
+    const prepMatches = cleanText.match(/(?:in|at|for|near|around|of|about|to)\s+([a-z\s]+?)(?:\s+(?:today|tomorrow|now|yesterday|forecast|weather|rain|temperature|this|next)|$)/gi);
+    if (prepMatches) {
+      for (const match of prepMatches) {
+        const clean = match.replace(/^(in|at|for|near|around|of|about|to)\s+/i, '').trim();
+        const filtered = clean.split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
+        if (filtered.length >= 2) candidates.push(filtered);
+      }
     }
   }
 
   if (candidates.length === 0) {
-    const words = text.replace(/[^a-zA-Z\s]/g, ' ').split(/\s+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w.toLowerCase()));
+    const words = cleanText.replace(/[^a-zA-Z\s]/g, ' ').split(/\s+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w.toLowerCase()));
     if (words.length > 0) {
       candidates.push(words.join(' '));
       if (words.length > 1) {

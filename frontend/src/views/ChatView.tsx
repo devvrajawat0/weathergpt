@@ -111,6 +111,35 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
     }
   };
 
+  const [voices, setVoices] = useState<any[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>('');
+
+  // Fetch available Web Speech voices
+  useEffect(() => {
+    const updateVoices = () => {
+      if (!('speechSynthesis' in window)) return;
+      const available = window.speechSynthesis.getVoices();
+      setVoices(available);
+      if (available.length > 0 && !selectedVoiceURI) {
+        const preferred = available.find((v: any) => 
+          v.name.includes('Natural') || 
+          v.name.includes('Google US English') || 
+          v.name.includes('Google UK English Female') ||
+          v.name.includes('Aria') ||
+          v.name.includes('Jenny') ||
+          v.name.includes('Neural') ||
+          (v.lang.startsWith('en') && v.name.includes('Google'))
+        ) || available.find((v: any) => v.lang.startsWith('en')) || available[0];
+        if (preferred) setSelectedVoiceURI(preferred.voiceURI);
+      }
+    };
+
+    updateVoices();
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
+  }, []);
+
   // High-Quality Human Voice Text-to-Speech reader
   const speakText = (text: string) => {
     if (!('speechSynthesis' in window)) return;
@@ -118,20 +147,14 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
     const cleanText = text.replace(/[*#_`|~]/g, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
-    // Dynamic High-Quality Natural Voice Selector
-    const voices = window.speechSynthesis.getVoices();
-    const naturalVoice = voices.find(v => 
-      v.name.includes('Natural') || 
-      v.name.includes('Google US English') || 
-      v.name.includes('Google UK English Female') ||
-      v.name.includes('Aria') ||
-      v.name.includes('Jenny') ||
-      v.name.includes('Neural') ||
-      (v.lang.startsWith('en') && v.name.includes('Google'))
-    ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+    // Use Selected Voice
+    const available = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+    const chosenVoice = available.find((v: any) => v.voiceURI === selectedVoiceURI) || 
+      available.find((v: any) => v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Aria')) || 
+      available[0];
 
-    if (naturalVoice) {
-      utterance.voice = naturalVoice;
+    if (chosenVoice) {
+      utterance.voice = chosenVoice;
     }
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
@@ -220,14 +243,34 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
           </div>
         </div>
 
-        <button
-          onClick={handleClearHistory}
-          className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs flex items-center gap-1.5"
-          title="Reset Chat History"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Reset</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {voices.length > 0 && (
+            <div className="hidden md:flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs">
+              <Volume2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <select
+                value={selectedVoiceURI}
+                onChange={(e) => setSelectedVoiceURI(e.target.value)}
+                className="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer max-w-[150px] truncate"
+                title="Select Voice for Text-to-Speech"
+              >
+                {voices.map((v: any) => (
+                  <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-900 text-white">
+                    {v.name.replace(/Microsoft|Google|Desktop|English/gi, '').trim() || v.name} ({v.lang})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            onClick={handleClearHistory}
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs flex items-center gap-1.5"
+            title="Reset Chat History"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Reset</span>
+          </button>
+        </div>
       </div>
 
       {/* Messages Stream */}
@@ -315,6 +358,28 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
 
       {/* District & Capital Suggestion Chips Banner */}
       <div className="px-4 py-2.5 border-t border-slate-800 bg-slate-900/60 flex flex-col gap-2 text-xs">
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin">
+          <div className="flex items-center gap-1 text-emerald-400 font-bold text-[11px] uppercase tracking-wider flex-shrink-0">
+            <MapPin className="w-3.5 h-3.5" /> ✈️ Trip Destinations:
+          </div>
+          {[
+            { name: 'Manali', query: 'Plan a trip to Manali with transport and scenic stay' },
+            { name: 'Goa', query: 'Plan a trip to Goa with beach stays and weather' },
+            { name: 'Shimla', query: 'Plan a trip to Shimla with valley view resorts' },
+            { name: 'Jaipur', query: 'Plan a trip to Jaipur with heritage hotels' },
+            { name: 'Wayanad', query: 'Plan a trip to Wayanad with nature homestays' },
+            { name: 'Tokyo', query: 'Plan a trip to Tokyo with travel time and view points' }
+          ].map((t) => (
+            <button
+              key={t.name}
+              onClick={() => handleSend(t.query)}
+              className="px-2.5 py-1 rounded-lg bg-emerald-950/50 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 transition font-medium"
+            >
+              🏖️ {t.name} Trip
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin">
           <div className="flex items-center gap-1 text-cyan-400 font-bold text-[11px] uppercase tracking-wider flex-shrink-0">
             <Building2 className="w-3.5 h-3.5" /> Indian Districts:
