@@ -359,28 +359,6 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
       {/* District & Capital Suggestion Chips Banner */}
       <div className="px-4 py-2.5 border-t border-slate-800 bg-slate-900/60 flex flex-col gap-2 text-xs">
         <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin">
-          <div className="flex items-center gap-1 text-emerald-400 font-bold text-[11px] uppercase tracking-wider flex-shrink-0">
-            <MapPin className="w-3.5 h-3.5" /> ✈️ Trip Destinations:
-          </div>
-          {[
-            { name: 'Manali', query: 'Plan a trip to Manali with transport and scenic stay' },
-            { name: 'Goa', query: 'Plan a trip to Goa with beach stays and weather' },
-            { name: 'Shimla', query: 'Plan a trip to Shimla with valley view resorts' },
-            { name: 'Jaipur', query: 'Plan a trip to Jaipur with heritage hotels' },
-            { name: 'Wayanad', query: 'Plan a trip to Wayanad with nature homestays' },
-            { name: 'Tokyo', query: 'Plan a trip to Tokyo with travel time and view points' }
-          ].map((t) => (
-            <button
-              key={t.name}
-              onClick={() => handleSend(t.query)}
-              className="px-2.5 py-1 rounded-lg bg-emerald-950/50 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 transition font-medium"
-            >
-              🏖️ {t.name} Trip
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin">
           <div className="flex items-center gap-1 text-cyan-400 font-bold text-[11px] uppercase tracking-wider flex-shrink-0">
             <Building2 className="w-3.5 h-3.5" /> Indian Districts:
           </div>

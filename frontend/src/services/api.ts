@@ -566,7 +566,7 @@ export function findLocationsInText(text: string): LocationItem[] {
 
 function extractLocationCandidates(text: string): string[] {
   const candidates: string[] = [];
-  let cleanText = text.toLowerCase().replace(/^(?:plan\s+a\s+trip\s+to|trip\s+to|travel\s+to|vacation\s+in|visit|tour|itinerary\s+for)\s+/i, '').trim();
+  let cleanText = text.toLowerCase().trim();
 
   // Explicit comparison check: must have compare, between, vs, v/s, versus, or explicit 'and' between cities
   const compareMatch = cleanText.match(/(?:compare|between)\s+([a-z\s]+?)\s+(?:and|vs|v\/s|with)\s+([a-z\s]+)/i)
