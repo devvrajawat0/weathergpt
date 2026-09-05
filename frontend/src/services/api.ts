@@ -567,10 +567,10 @@ function extractLocationCandidates(text: string): string[] {
   const candidates: string[] = [];
   const lower = text.toLowerCase();
 
-  const compareMatch = lower.match(/(?:compare|between)\s+([a-z\s]+?)\s+(?:and|vs|with)\s+([a-z\s]+)/i);
+  const compareMatch = lower.match(/(?:compare|between)?\s*([a-z\s]+?)\s*(?:\bvs\b|\bv\/s\b|\band\b|\bwith\b|\bor\b|,)\s*([a-z\s]+)/i);
   if (compareMatch) {
-    const c1 = compareMatch[1].split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
-    const c2 = compareMatch[2].split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
+    const c1 = compareMatch[1].replace(/^(?:compare|between|weather|forecast|in|for|at|about)\s+/i, '').split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
+    const c2 = compareMatch[2].replace(/(?:weather|forecast|today|tomorrow|now)$/i, '').split(/\s+/).filter(w => !STOP_WORDS.has(w)).join(' ');
     if (c1.length >= 2) candidates.push(c1);
     if (c2.length >= 2) candidates.push(c2);
   }
