@@ -397,6 +397,12 @@ ${pAqi.usAqi > 100 ? `- 😷 **Air Quality**: AQI is ${pAqi.usAqi} (${pAqi.label
     const today = pDaily[0] || {};
     const tomorrow = pDaily[1] || {};
 
+    const foodAdvice = pCurr.temp >= 28 
+      ? "🥤 **Coolers**: Chilled Mango Lassi, Nimbu Pani, Kulfi, Watermelon Juice"
+      : (today.precipProbability || 0) > 40
+      ? "☕ **Rainy Comfort**: Crispy Samosas, Onion Pakodas, Masala Chai, Bhutta (Roasted Corn)"
+      : "🍲 **Comfort Meals**: Hot Ginger Tea, Samosas, Gajar ka Halwa, Hot Soup";
+
     reply = `### 🌤️ Weather Overview for **${pLoc}**
 
 Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**.
@@ -409,7 +415,10 @@ Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**
 
 #### 💡 Smart Tips:
 - **Clothing**: ${pCurr.temp > 30 ? "Lightweight, breathable cotton clothes are ideal." : pCurr.temp < 18 ? "Warm jacket or sweater recommended." : "Comfortable casual clothing."}
-- **Outdoors**: ${pCurr.uvIndex >= 6 ? "☀️ High UV Index (" + pCurr.uvIndex + "). Wear sunscreen and sunglasses." : "UV Index is moderate."}`;
+- **Outdoors**: ${pCurr.uvIndex >= 6 ? "☀️ High UV Index (" + pCurr.uvIndex + "). Wear sunscreen and sunglasses." : "UV Index is moderate."}
+
+#### 🍲 Weather-Based Food & Drink Suggestions:
+- ${foodAdvice}`;
   }
 
   return {

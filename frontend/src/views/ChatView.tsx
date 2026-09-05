@@ -111,13 +111,30 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
     }
   };
 
-  // Text-to-Speech reader
+  // High-Quality Human Voice Text-to-Speech reader
   const speakText = (text: string) => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const cleanText = text.replace(/[*#_`|~]/g, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
+
+    // Dynamic High-Quality Natural Voice Selector
+    const voices = window.speechSynthesis.getVoices();
+    const naturalVoice = voices.find(v => 
+      v.name.includes('Natural') || 
+      v.name.includes('Google US English') || 
+      v.name.includes('Google UK English Female') ||
+      v.name.includes('Aria') ||
+      v.name.includes('Jenny') ||
+      v.name.includes('Neural') ||
+      (v.lang.startsWith('en') && v.name.includes('Google'))
+    ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+
+    if (naturalVoice) {
+      utterance.voice = naturalVoice;
+    }
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -331,6 +348,12 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
             className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-500/40 hover:to-blue-500/40 text-cyan-200 border border-cyan-500/40 transition font-semibold"
           >
             ⚔️ Compare Delhi & Tokyo
+          </button>
+          <button
+            onClick={() => handleSend("Food and drink suggestions for Delhi weather")}
+            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-600/30 to-orange-600/30 hover:from-amber-500/40 hover:to-orange-500/40 text-amber-200 border border-amber-500/40 transition font-semibold"
+          >
+            🍲 Food & Drink Pairings
           </button>
         </div>
       </div>
