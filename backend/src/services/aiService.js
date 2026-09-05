@@ -458,6 +458,43 @@ function generateEssentialsChecklist(pCurr, pDaily, pAqi, pLocName) {
 | 💧 **Water Bottle** | ${waterBottleStatus} | Humidity: ${pCurr.humidity}% |`;
 }
 
+function generateFoodSuggestions(pCurr, pDaily, pLocName) {
+  const rainProb = pDaily[0]?.precipProbability || 0;
+  const isRaining = pCurr.precipitation > 0 || (pCurr.weatherCode && pCurr.weatherCode >= 51) || rainProb >= 35;
+  const isHot = pCurr.temp >= 28;
+  const isCold = pCurr.temp <= 19;
+
+  let beverages = "";
+  let snacks = "";
+  let meals = "";
+
+  if (isRaining) {
+    beverages = "☕ **Hot Beverages**: Masala Adrak Chai, Filter Coffee, Hot Cocoa";
+    snacks = "🍟 **Crispy Monsoon Snacks**: Samosas, Onion Pakodas, Bhutta (Roasted Corn), Bread Pakora";
+    meals = "🍲 **Comfort Dishes**: Hot Tomato Soup, Maggi Noodles, Hot Dal Khichdi with Ghee";
+  } else if (isHot) {
+    beverages = "🥤 **Chilled Refreshments**: Mango Lassi, Nimbu Pani, Coconut Water, Sugarcane Juice, Chaas";
+    snacks = "🍧 **Cooling Treats**: Kulfi Falooda, Chilled Watermelon Slices, Ice Cream Sundae";
+    meals = "🥗 **Light Hydrating Meals**: Curd Rice with Mustard Tempering, Cucumber Raita, Mint Salad";
+  } else if (isCold) {
+    beverages = "☕ **Warming Drinks**: Hot Ginger Kulhad Tea, Haldi Doodh (Golden Milk), Hot Chocolate";
+    snacks = "🥔 **Hot Savory Snacks**: Hot Samosa with Chole, Aloo Tikki Chaat, Fried Moongode";
+    meals = "🍲 **Hearty Winter Meals**: Sarson ka Saag & Makki Roti, Hot Gajar Halwa, Dal Makhani";
+  } else {
+    beverages = "🍵 **Classic Refreshers**: Fresh Green Tea, Iced Coffee, Fresh Orange Juice";
+    snacks = "🥟 **Street Food Bites**: Pav Bhaji, Bhel Puri, Steamed Momos, Spring Rolls";
+    meals = "🍛 **Balanced Platter**: North Indian Thali, Fresh Vegetable Pulao with Raita";
+  }
+
+  return `#### 🍲 Weather-Paired Food & Drink Suggestions for **${pLocName}**:
+- ${beverages}
+- ${snacks}
+- ${meals}`;
+}
+
+  const essentialsTable = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
+  const foodSection = generateFoodSuggestions(pCurr, pDaily, pLoc);
+
   // Scenario A: Comparison between 2 locations
   if (weatherContexts.length >= 2) {
     const sec = weatherContexts[1];
@@ -473,7 +510,7 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
 
 | Weather Parameter | ${pLoc} | ${sLoc} |
 | :--- | :--- | :--- |
-| **Current Temperature** | **${pCurr.temp}°C** (Feels like ${pCurr.feelsLike}°C) | **${sCurr.temp}°C** (Feels like ${pCurr.feelsLike}°C) |
+| **Current Temperature** | **${pCurr.temp}°C** (Feels like ${pCurr.feelsLike}°C) | **${sCurr.temp}°C** (Feels like ${sCurr.feelsLike}°C) |
 | **Condition** | ${pCurr.condition} | ${sCurr.condition} |
 | **Humidity** | ${pCurr.humidity}% | ${sCurr.humidity}% |
 | **Wind Speed** | ${pCurr.windSpeed} km/h | ${sCurr.windSpeed} km/h |
@@ -489,7 +526,6 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
   else if (queryLower.includes('rain') || queryLower.includes('precipitation') || queryLower.includes('umbrella')) {
     const rainToday = pDaily[0]?.precipProbability || 0;
     const rainTomorrow = pDaily[1]?.precipProbability || 0;
-    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
 
     reply = `### 🌧️ Rain Forecast for **${pLoc}**
 
@@ -497,13 +533,9 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
 - **Today's Rain Chance**: **${rainToday}%** chance of rainfall (Max Temp: ${pDaily[0]?.maxTemp}°C).
 - **Tomorrow's Rain Chance**: **${rainTomorrow}%** chance of rain (Max Temp: ${pDaily[1]?.maxTemp}°C).
 
-${essentials}
+${essentialsTable}
 
-#### 🎒 Travel & Clothing Advice:
-${rainToday > 40 || rainTomorrow > 40 
-  ? `- ☔ **Umbrella Recommended**: High chance of rain. Carry rain gear and drive carefully on wet roads.`
-  : `- ☀️ **Low Rain Risk**: Rain is unlikely today. Good conditions for outdoor travel.`}
-${pAqi.usAqi > 100 ? `- 😷 **Air Quality**: AQI is ${pAqi.usAqi} (${pAqi.label}). Sensitive groups should limit prolonged outdoor exertion.` : ''}`;
+${foodSection}`;
   }
   // Scenario C: Agriculture / Farmer advice query
   else if (queryLower.includes('farmer') || queryLower.includes('agri') || queryLower.includes('crop') || queryLower.includes('irrigation')) {
@@ -519,18 +551,30 @@ ${pAqi.usAqi > 100 ? `- 😷 **Air Quality**: AQI is ${pAqi.usAqi} (${pAqi.label
 2. **Pesticide Spraying**: ${pCurr.windSpeed > 20 ? "⚠️ Avoid spraying pesticides/fertilizers today due to high wind speeds (" + pCurr.windSpeed + " km/h) causing spray drift." : "Wind conditions are suitable for pesticide and fertilizer application."}
 3. **Harvesting & Storage**: ${pDaily[1]?.precipProbability > 60 ? "Protect harvested crops in dry storage to prevent moisture damage from upcoming rain." : "Weather is suitable for field preparation and crop harvesting."}`;
   }
-  // Scenario D: General / Tomorrow / Current Weather Summary
+  // Scenario D: Clothing / Outfit / Essentials query
+  else if (queryLower.includes('wear') || queryLower.includes('cloth') || queryLower.includes('outfit') || queryLower.includes('jacket') || queryLower.includes('hat') || queryLower.includes('cap') || queryLower.includes('essential') || queryLower.includes('carry')) {
+    reply = `### 👕 Clothing & Essentials Guide for **${pLoc}**
+
+Currently in **${pLoc}**, it is **${pCurr.temp}°C** (${pCurr.condition}).
+
+${essentialsTable}
+
+${foodSection}`;
+  }
+  // Scenario E: Food & Drink Pairings query
+  else if (queryLower.includes('food') || queryLower.includes('drink') || queryLower.includes('eat') || queryLower.includes('pairing') || queryLower.includes('tea') || queryLower.includes('coffee')) {
+    reply = `### 🍲 Weather-Paired Food & Drink Suggestions for **${pLoc}**
+
+Currently in **${pLoc}**, it is **${pCurr.temp}°C** (${pCurr.condition}).
+
+${foodSection}
+
+${essentialsTable}`;
+  }
+  // Scenario F: General Weather Overview & Forecast
   else {
     const today = pDaily[0] || {};
     const tomorrow = pDaily[1] || {};
-
-    const foodAdvice = pCurr.temp >= 28 
-      ? "🥤 **Coolers**: Chilled Mango Lassi, Nimbu Pani, Kulfi, Watermelon Juice"
-      : (today.precipProbability || 0) > 40
-      ? "☕ **Rainy Comfort**: Crispy Samosas, Onion Pakodas, Masala Chai, Bhutta (Roasted Corn)"
-      : "🍲 **Comfort Meals**: Hot Ginger Tea, Samosas, Gajar ka Halwa, Hot Soup";
-
-    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
 
     reply = `### 🌤️ Weather Overview for **${pLoc}**
 
@@ -542,14 +586,9 @@ Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**
 - **Wind & Pressure**: ${pCurr.windSpeed} km/h | Pressure: ${pCurr.pressure} hPa
 - **Tomorrow's Forecast**: ${tomorrow.condition} with High of **${tomorrow.maxTemp}°C**, Low of **${tomorrow.minTemp}°C** (${tomorrow.precipProbability}% rain probability).
 
-${essentials}
+${essentialsTable}
 
-#### 💡 Smart Tips:
-- **Clothing**: ${pCurr.temp > 30 ? "Lightweight, breathable cotton clothes are ideal." : pCurr.temp < 18 ? "Warm jacket or sweater recommended." : "Comfortable casual clothing."}
-- **Outdoors**: ${pCurr.uvIndex >= 6 ? "☀️ High UV Index (" + pCurr.uvIndex + "). Wear sunscreen and sunglasses." : "UV Index is moderate."}
-
-#### 🍲 Weather-Based Food & Drink Suggestions:
-- ${foodAdvice}`;
+${foodSection}`;
   }
 
   return {

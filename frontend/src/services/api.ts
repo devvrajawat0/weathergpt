@@ -789,6 +789,40 @@ function generateEssentialsChecklist(pCurr: any, pDaily: any[], pAqi: any, pLocN
 | 💧 **Water Bottle** | ${waterBottleStatus} | Humidity: ${pCurr.humidity}% |`;
 }
 
+function generateFoodSuggestions(pCurr: any, pDaily: any[], pLocName: string): string {
+  const rainProb = pDaily[0]?.precipProbability || 0;
+  const isRaining = pCurr.precipitation > 0 || (pCurr.weatherCode && pCurr.weatherCode >= 51) || rainProb >= 35;
+  const isHot = pCurr.temp >= 28;
+  const isCold = pCurr.temp <= 19;
+
+  let beverages = "";
+  let snacks = "";
+  let meals = "";
+
+  if (isRaining) {
+    beverages = "☕ **Hot Beverages**: Masala Adrak Chai, Filter Coffee, Hot Cocoa";
+    snacks = "🍟 **Crispy Monsoon Snacks**: Samosas, Onion Pakodas, Bhutta (Roasted Corn), Bread Pakora";
+    meals = "🍲 **Comfort Dishes**: Hot Tomato Soup, Maggi Noodles, Hot Dal Khichdi with Ghee";
+  } else if (isHot) {
+    beverages = "🥤 **Chilled Refreshments**: Mango Lassi, Nimbu Pani, Coconut Water, Sugarcane Juice, Chaas";
+    snacks = "🍧 **Cooling Treats**: Kulfi Falooda, Chilled Watermelon Slices, Ice Cream Sundae";
+    meals = "🥗 **Light Hydrating Meals**: Curd Rice with Mustard Tempering, Cucumber Raita, Mint Salad";
+  } else if (isCold) {
+    beverages = "☕ **Warming Drinks**: Hot Ginger Kulhad Tea, Haldi Doodh (Golden Milk), Hot Chocolate";
+    snacks = "🥔 **Hot Savory Snacks**: Hot Samosa with Chole, Aloo Tikki Chaat, Fried Moongode";
+    meals = "🍲 **Hearty Winter Meals**: Sarson ka Saag & Makki Roti, Hot Gajar Halwa, Dal Makhani";
+  } else {
+    beverages = "🍵 **Classic Refreshers**: Fresh Green Tea, Iced Coffee, Fresh Orange Juice";
+    snacks = "🥟 **Street Food Bites**: Pav Bhaji, Bhel Puri, Steamed Momos, Spring Rolls";
+    meals = "🍛 **Balanced Platter**: North Indian Thali, Fresh Vegetable Pulao with Raita";
+  }
+
+  return `#### 🍲 Weather-Paired Food & Drink Suggestions for **${pLocName}**:
+- ${beverages}
+- ${snacks}
+- ${meals}`;
+}
+
 export async function sendChatMessage(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   currentLocation?: LocationItem | null
@@ -845,6 +879,9 @@ export async function sendChatMessage(
 
   let reply = "";
 
+  const essentialsTable = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
+  const foodSection = generateFoodSuggestions(pCurr, pDaily, pLoc);
+
   // Scenario A: Multi-location comparison (e.g. "Compare Gwalior and Bhopal")
   if (weatherContexts.length >= 2) {
     const sec = weatherContexts[1];
@@ -877,7 +914,6 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
   else if (queryLower.includes('rain') || queryLower.includes('precipitation') || queryLower.includes('umbrella') || queryLower.includes('shower')) {
     const rainToday = pDaily[0]?.precipProbability || 0;
     const rainTomorrow = pDaily[1]?.precipProbability || 0;
-    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
 
     reply = `### 🌧️ Rain Forecast for **${pLoc}**
 
@@ -885,7 +921,9 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
 - **Today's Rain Chance**: **${rainToday}%** (Max Temp: ${pDaily[0]?.maxTemp}°C).
 - **Tomorrow's Rain Chance**: **${rainTomorrow}%** (Max Temp: ${pDaily[1]?.maxTemp}°C).
 
-${essentials}`;
+${essentialsTable}
+
+${foodSection}`;
   }
   // Scenario C: Agriculture / Farmer advice query
   else if (queryLower.includes('farm') || queryLower.includes('agri') || queryLower.includes('crop') || queryLower.includes('irrigation')) {
@@ -905,25 +943,28 @@ ${essentials}`;
   }
   // Scenario D: Clothing / Outfit / Essentials query
   else if (queryLower.includes('wear') || queryLower.includes('cloth') || queryLower.includes('outfit') || queryLower.includes('jacket') || queryLower.includes('hat') || queryLower.includes('cap') || queryLower.includes('essential') || queryLower.includes('carry')) {
-    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
     reply = `### 👕 Clothing & Essentials Guide for **${pLoc}**
 
 Currently in **${pLoc}**, it is **${pCurr.temp}°C** (${pCurr.condition}).
 
-${essentials}`;
+${essentialsTable}
+
+${foodSection}`;
   }
-  // Scenario E: General Weather Overview & Forecast
+  // Scenario E: Food & Drink Pairings query
+  else if (queryLower.includes('food') || queryLower.includes('drink') || queryLower.includes('eat') || queryLower.includes('pairing') || queryLower.includes('tea') || queryLower.includes('coffee')) {
+    reply = `### 🍲 Weather-Paired Food & Drink Suggestions for **${pLoc}**
+
+Currently in **${pLoc}**, it is **${pCurr.temp}°C** (${pCurr.condition}).
+
+${foodSection}
+
+${essentialsTable}`;
+  }
+  // Scenario F: General Weather Overview & Forecast (Includes Essentials & Food Suggestions!)
   else {
     const today = pDaily[0] || {};
     const tomorrow = pDaily[1] || {};
-
-    const foodAdvice = pCurr.temp >= 28 
-      ? "🥤 **Coolers**: Chilled Mango Lassi, Nimbu Pani, Kulfi, Watermelon Juice"
-      : (today.precipProbability || 0) > 40
-      ? "☕ **Rainy Comfort**: Crispy Samosas, Onion Pakodas, Masala Chai, Bhutta (Roasted Corn)"
-      : "🍲 **Comfort Meals**: Hot Ginger Tea, Samosas, Gajar ka Halwa, Hot Soup";
-
-    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
 
     reply = `### 🌤️ Weather Overview for **${pLoc}**
 
@@ -935,10 +976,9 @@ Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**
 - **Wind & Pressure**: ${pCurr.windSpeed} km/h | Pressure: ${pCurr.pressure} hPa
 - **Tomorrow's Forecast**: ${tomorrow.condition} with High of **${tomorrow.maxTemp}°C**, Low of **${tomorrow.minTemp}°C** (${tomorrow.precipProbability}% rain probability).
 
-${essentials}
+${essentialsTable}
 
-#### 🍲 Weather-Based Food & Drink Suggestions:
-- ${foodAdvice}`;
+${foodSection}`;
   }
 
   return {
