@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage, LocationItem } from '../types';
 import { sendChatMessage, searchLocations } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
-import { Send, Mic, MicOff, Bot, User, Sparkles, Volume2, RotateCcw, Loader2, MapPin, ArrowRight, Building2, Globe2 } from 'lucide-react';
+import { Send, Mic, MicOff, Bot, User, Sparkles, Volume2, RotateCcw, Loader2, MapPin, ArrowRight } from 'lucide-react';
 
 interface ChatViewProps {
   currentLocation: LocationItem | null;
@@ -409,57 +409,6 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
         )}
 
         <div ref={messagesEndRef} />
-      </div>
-
-      {/* District & Capital Suggestion Chips Banner */}
-      <div className="px-4 py-2.5 border-t border-slate-800 bg-slate-900/60 flex flex-col gap-2 text-xs">
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin">
-          <div className="flex items-center gap-1 text-cyan-400 font-bold text-[11px] uppercase tracking-wider flex-shrink-0">
-            <Building2 className="w-3.5 h-3.5" /> Indian Districts:
-          </div>
-          {['Gwalior', 'Manali', 'Wayanad', 'Jaipur', 'Shimla', 'Indore', 'Visakhapatnam', 'Leh'].map((dst) => (
-            <button
-              key={dst}
-              onClick={() => handleSend(`weather in ${dst}`)}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-cyan-600/30 hover:border-cyan-500/50 text-slate-300 hover:text-white border border-slate-700 transition"
-            >
-              📍 {dst}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-thin">
-          <div className="flex items-center gap-1 text-amber-400 font-bold text-[11px] uppercase tracking-wider flex-shrink-0">
-            <Globe2 className="w-3.5 h-3.5" /> World Capitals:
-          </div>
-          {['Tokyo', 'London', 'Paris', 'Washington D.C.', 'Berlin', 'Ottawa', 'Canberra'].map((cap) => (
-            <button
-              key={cap}
-              onClick={() => handleSend(`weather in ${cap}`)}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-600/30 hover:border-amber-500/50 text-slate-300 hover:text-white border border-slate-700 transition"
-            >
-              🌍 {cap}
-            </button>
-          ))}
-          <button
-            onClick={() => handleSend("Compare Delhi and Tokyo")}
-            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-500/40 hover:to-blue-500/40 text-cyan-200 border border-cyan-500/40 transition font-semibold"
-          >
-            ⚔️ Compare Delhi & Tokyo
-          </button>
-          <button
-            onClick={() => handleSend("Food and drink suggestions for Delhi weather")}
-            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-600/30 to-orange-600/30 hover:from-amber-500/40 hover:to-orange-500/40 text-amber-200 border border-amber-500/40 transition font-semibold"
-          >
-            🍲 Food & Drink Pairings
-          </button>
-          <button
-            onClick={() => handleSend("Do I need an umbrella or jacket in Gwalior today?")}
-            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-500/40 hover:to-teal-500/40 text-emerald-200 border border-emerald-500/40 transition font-semibold"
-          >
-            🎒 Weather Essentials (Gwalior)
-          </button>
-        </div>
       </div>
 
       {/* Live Autocomplete Suggestions Floating Dropdown */}
