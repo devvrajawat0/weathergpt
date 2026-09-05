@@ -432,6 +432,32 @@ ${JSON.stringify(weatherContexts, null, 2)}`;
   const pAqi = primary.weather.aqi;
   const pDaily = primary.weather.daily;
 
+function generateEssentialsChecklist(pCurr, pDaily, pAqi, pLocName) {
+  const rainProb = pDaily[0]?.precipProbability || 0;
+  const isRaining = pCurr.precipitation > 0 || (pCurr.weatherCode && pCurr.weatherCode >= 51) || rainProb >= 35;
+  const isCold = pCurr.temp <= 19;
+  const isSunnyHighUV = (pCurr.uvIndex || pDaily[0]?.uvMax || 5) >= 5 && (pCurr.isDay !== false);
+  const isHighAQI = pAqi.usAqi > 100;
+  const isHot = pCurr.temp >= 29;
+
+  const umbrellaStatus = isRaining ? "✅ **YES** (Rain / Drizzle expected)" : "❌ **NO** (Dry weather)";
+  const jacketStatus = isCold ? `✅ **YES** (Cool temp: ${pCurr.temp}°C)` : "❌ **NO** (Warm & comfortable)";
+  const hatStatus = isSunnyHighUV ? `✅ **YES** (High UV Index: ${pCurr.uvIndex || pDaily[0]?.uvMax || 5})` : "❌ **NO** (Low solar intensity)";
+  const sunglassesStatus = isSunnyHighUV ? "✅ **YES** (Bright sunlight)" : "❌ **NO** (Not required)";
+  const maskStatus = isHighAQI ? `✅ **YES** (Unhealthy AQI: ${pAqi.usAqi})` : "❌ **NO** (Good air quality)";
+  const waterBottleStatus = isHot ? `✅ **YES** (Warm temp: ${pCurr.temp}°C - Stay hydrated)` : "❌ **NO** (Optional)";
+
+  return `#### 🎒 Smart Weather Essentials Checklist for **${pLocName}**:
+| Essential Item | Carry Today? | Reason & Real-Time Weather Reading |
+| :--- | :---: | :--- |
+| ☔ **Umbrella / Raincoat** | ${umbrellaStatus} | Precipitation: ${pCurr.precipitation} mm \| Rain Chance: ${rainProb}% |
+| 🧥 **Jacket / Sweater** | ${jacketStatus} | Current Temp: ${pCurr.temp}°C (Feels like ${pCurr.feelsLike}°C) |
+| 🧢 **Sun Hat / Cap** | ${hatStatus} | UV Index: ${pCurr.uvIndex || pDaily[0]?.uvMax || 5} |
+| 🕶️ **Sunglasses** | ${sunglassesStatus} | Solar Intensity: ${pCurr.isDay !== false ? 'Daytime' : 'Night'} |
+| 😷 **Pollution Mask** | ${maskStatus} | Air Quality (AQI): ${pAqi.usAqi} (${pAqi.label}) |
+| 💧 **Water Bottle** | ${waterBottleStatus} | Humidity: ${pCurr.humidity}% |`;
+}
+
   // Scenario A: Comparison between 2 locations
   if (weatherContexts.length >= 2) {
     const sec = weatherContexts[1];
@@ -447,7 +473,7 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
 
 | Weather Parameter | ${pLoc} | ${sLoc} |
 | :--- | :--- | :--- |
-| **Current Temperature** | **${pCurr.temp}°C** (Feels like ${pCurr.feelsLike}°C) | **${sCurr.temp}°C** (Feels like ${sCurr.feelsLike}°C) |
+| **Current Temperature** | **${pCurr.temp}°C** (Feels like ${pCurr.feelsLike}°C) | **${sCurr.temp}°C** (Feels like ${pCurr.feelsLike}°C) |
 | **Condition** | ${pCurr.condition} | ${sCurr.condition} |
 | **Humidity** | ${pCurr.humidity}% | ${sCurr.humidity}% |
 | **Wind Speed** | ${pCurr.windSpeed} km/h | ${sCurr.windSpeed} km/h |
@@ -463,12 +489,15 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
   else if (queryLower.includes('rain') || queryLower.includes('precipitation') || queryLower.includes('umbrella')) {
     const rainToday = pDaily[0]?.precipProbability || 0;
     const rainTomorrow = pDaily[1]?.precipProbability || 0;
+    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
 
     reply = `### 🌧️ Rain Forecast for **${pLoc}**
 
 - **Current Condition**: ${pCurr.condition} with **${pCurr.precipitation} mm** recorded precipitation.
 - **Today's Rain Chance**: **${rainToday}%** chance of rainfall (Max Temp: ${pDaily[0]?.maxTemp}°C).
 - **Tomorrow's Rain Chance**: **${rainTomorrow}%** chance of rain (Max Temp: ${pDaily[1]?.maxTemp}°C).
+
+${essentials}
 
 #### 🎒 Travel & Clothing Advice:
 ${rainToday > 40 || rainTomorrow > 40 
@@ -501,6 +530,8 @@ ${pAqi.usAqi > 100 ? `- 😷 **Air Quality**: AQI is ${pAqi.usAqi} (${pAqi.label
       ? "☕ **Rainy Comfort**: Crispy Samosas, Onion Pakodas, Masala Chai, Bhutta (Roasted Corn)"
       : "🍲 **Comfort Meals**: Hot Ginger Tea, Samosas, Gajar ka Halwa, Hot Soup";
 
+    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
+
     reply = `### 🌤️ Weather Overview for **${pLoc}**
 
 Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**.
@@ -510,6 +541,8 @@ Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**
 - **Air Quality (AQI)**: **${pAqi.usAqi}** (${pAqi.label}) ${pAqi.usAqi > 150 ? '⚠️ Unhealthy' : '✅ Safe'}
 - **Wind & Pressure**: ${pCurr.windSpeed} km/h | Pressure: ${pCurr.pressure} hPa
 - **Tomorrow's Forecast**: ${tomorrow.condition} with High of **${tomorrow.maxTemp}°C**, Low of **${tomorrow.minTemp}°C** (${tomorrow.precipProbability}% rain probability).
+
+${essentials}
 
 #### 💡 Smart Tips:
 - **Clothing**: ${pCurr.temp > 30 ? "Lightweight, breathable cotton clothes are ideal." : pCurr.temp < 18 ? "Warm jacket or sweater recommended." : "Comfortable casual clothing."}

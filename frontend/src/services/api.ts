@@ -763,6 +763,32 @@ export async function resolveTargetLocations(lastUserMsg: string): Promise<Locat
   return uniqueLocations;
 }
 
+function generateEssentialsChecklist(pCurr: any, pDaily: any[], pAqi: any, pLocName: string): string {
+  const rainProb = pDaily[0]?.precipProbability || 0;
+  const isRaining = pCurr.precipitation > 0 || (pCurr.weatherCode && pCurr.weatherCode >= 51) || rainProb >= 35;
+  const isCold = pCurr.temp <= 19;
+  const isSunnyHighUV = (pCurr.uvIndex || pDaily[0]?.uvMax || 5) >= 5 && (pCurr.isDay !== false);
+  const isHighAQI = pAqi.usAqi > 100;
+  const isHot = pCurr.temp >= 29;
+
+  const umbrellaStatus = isRaining ? "✅ **YES** (Rain / Drizzle expected)" : "❌ **NO** (Dry weather)";
+  const jacketStatus = isCold ? `✅ **YES** (Cool temp: ${pCurr.temp}°C)` : "❌ **NO** (Warm & comfortable)";
+  const hatStatus = isSunnyHighUV ? `✅ **YES** (High UV Index: ${pCurr.uvIndex || pDaily[0]?.uvMax || 5})` : "❌ **NO** (Low solar intensity)";
+  const sunglassesStatus = isSunnyHighUV ? "✅ **YES** (Bright sunlight)" : "❌ **NO** (Not required)";
+  const maskStatus = isHighAQI ? `✅ **YES** (Unhealthy AQI: ${pAqi.usAqi})` : "❌ **NO** (Good air quality)";
+  const waterBottleStatus = isHot ? `✅ **YES** (Warm temp: ${pCurr.temp}°C - Stay hydrated)` : "❌ **NO** (Optional)";
+
+  return `#### 🎒 Smart Weather Essentials Checklist for **${pLocName}**:
+| Essential Item | Carry Today? | Reason & Real-Time Weather Reading |
+| :--- | :---: | :--- |
+| ☔ **Umbrella / Raincoat** | ${umbrellaStatus} | Precipitation: ${pCurr.precipitation} mm \| Rain Chance: ${rainProb}% |
+| 🧥 **Jacket / Sweater** | ${jacketStatus} | Current Temp: ${pCurr.temp}°C (Feels like ${pCurr.feelsLike}°C) |
+| 🧢 **Sun Hat / Cap** | ${hatStatus} | UV Index: ${pCurr.uvIndex || pDaily[0]?.uvMax || 5} |
+| 🕶️ **Sunglasses** | ${sunglassesStatus} | Solar Intensity: ${pCurr.isDay !== false ? 'Daytime' : 'Night'} |
+| 😷 **Pollution Mask** | ${maskStatus} | Air Quality (AQI): ${pAqi.usAqi} (${pAqi.label}) |
+| 💧 **Water Bottle** | ${waterBottleStatus} | Humidity: ${pCurr.humidity}% |`;
+}
+
 export async function sendChatMessage(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   currentLocation?: LocationItem | null
@@ -851,6 +877,7 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
   else if (queryLower.includes('rain') || queryLower.includes('precipitation') || queryLower.includes('umbrella') || queryLower.includes('shower')) {
     const rainToday = pDaily[0]?.precipProbability || 0;
     const rainTomorrow = pDaily[1]?.precipProbability || 0;
+    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
 
     reply = `### 🌧️ Rain Forecast for **${pLoc}**
 
@@ -858,11 +885,7 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
 - **Today's Rain Chance**: **${rainToday}%** (Max Temp: ${pDaily[0]?.maxTemp}°C).
 - **Tomorrow's Rain Chance**: **${rainTomorrow}%** (Max Temp: ${pDaily[1]?.maxTemp}°C).
 
-#### 🎒 Travel & Clothing Advice:
-${rainToday > 40 || rainTomorrow > 40 
-  ? `- ☔ **Umbrella Recommended**: Rain expected in ${pLoc}. Carry rain gear and drive carefully on wet roads.`
-  : `- ☀️ **Low Rain Risk**: Rain is unlikely today in ${pLoc}. Good conditions for outdoor travel.`}
-${pAqi.usAqi > 100 ? `- 😷 **Air Quality**: AQI is ${pAqi.usAqi} (${pAqi.label}). Sensitive groups should take precautions.` : ''}`;
+${essentials}`;
   }
   // Scenario C: Agriculture / Farmer advice query
   else if (queryLower.includes('farm') || queryLower.includes('agri') || queryLower.includes('crop') || queryLower.includes('irrigation')) {
@@ -880,16 +903,14 @@ ${pAqi.usAqi > 100 ? `- 😷 **Air Quality**: AQI is ${pAqi.usAqi} (${pAqi.label
 2. **Pesticide Spraying**: ${pCurr.windSpeed > 20 ? `⚠️ Avoid spraying pesticides today due to high wind speeds (${pCurr.windSpeed} km/h).` : "Wind conditions are suitable for pesticide and fertilizer application."}
 3. **Crop Management**: ${pDaily[1]?.precipProbability > 60 ? "Protect harvested crops in dry storage to prevent rain damage." : "Weather is suitable for field activities and harvesting."}`;
   }
-  // Scenario D: Clothing / Outfit query
-  else if (queryLower.includes('wear') || queryLower.includes('cloth') || queryLower.includes('outfit') || queryLower.includes('jacket') || queryLower.includes('dress')) {
-    reply = `### 👕 Clothing & Outfit Advice for **${pLoc}**
+  // Scenario D: Clothing / Outfit / Essentials query
+  else if (queryLower.includes('wear') || queryLower.includes('cloth') || queryLower.includes('outfit') || queryLower.includes('jacket') || queryLower.includes('hat') || queryLower.includes('cap') || queryLower.includes('essential') || queryLower.includes('carry')) {
+    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
+    reply = `### 👕 Clothing & Essentials Guide for **${pLoc}**
 
 Currently in **${pLoc}**, it is **${pCurr.temp}°C** (${pCurr.condition}).
 
-#### 👔 What to Wear Today:
-- **Primary Clothing**: ${pCurr.temp >= 30 ? "☀️ Light, breathable cotton clothing." : pCurr.temp <= 18 ? "🧥 Layer up with a jacket, sweater, or fleece." : "👕 Comfortable casual attire (t-shirt & light pants)."}
-- **Sun Protection**: ${pCurr.uvIndex >= 6 ? "🧢 High UV Index. Wear sunscreen and sunglasses." : "UV levels are low to moderate."}
-- **Weather Protection**: ${pCurr.precipitation > 0 || (pDaily[0]?.precipProbability || 0) > 40 ? "☔ Carry a compact umbrella or raincoat." : "No rain protection required."}`;
+${essentials}`;
   }
   // Scenario E: General Weather Overview & Forecast
   else {
@@ -902,6 +923,8 @@ Currently in **${pLoc}**, it is **${pCurr.temp}°C** (${pCurr.condition}).
       ? "☕ **Rainy Comfort**: Crispy Samosas, Onion Pakodas, Masala Chai, Bhutta (Roasted Corn)"
       : "🍲 **Comfort Meals**: Hot Ginger Tea, Samosas, Gajar ka Halwa, Hot Soup";
 
+    const essentials = generateEssentialsChecklist(pCurr, pDaily, pAqi, pLoc);
+
     reply = `### 🌤️ Weather Overview for **${pLoc}**
 
 Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**.
@@ -912,9 +935,7 @@ Currently in **${pLoc}**, it is **${pCurr.temp}°C** with **${pCurr.condition}**
 - **Wind & Pressure**: ${pCurr.windSpeed} km/h | Pressure: ${pCurr.pressure} hPa
 - **Tomorrow's Forecast**: ${tomorrow.condition} with High of **${tomorrow.maxTemp}°C**, Low of **${tomorrow.minTemp}°C** (${tomorrow.precipProbability}% rain probability).
 
-#### 💡 Smart Tips:
-- **Clothing**: ${pCurr.temp > 30 ? "Lightweight, breathable cotton clothes are ideal." : pCurr.temp < 18 ? "Warm jacket or sweater recommended." : "Comfortable casual clothing."}
-- **Outdoors**: ${pCurr.uvIndex >= 6 ? "☀️ High UV Index (" + pCurr.uvIndex + "). Wear sunscreen and sunglasses." : "UV Index is moderate."}
+${essentials}
 
 #### 🍲 Weather-Based Food & Drink Suggestions:
 - ${foodAdvice}`;
