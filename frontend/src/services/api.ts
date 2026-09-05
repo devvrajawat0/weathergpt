@@ -452,19 +452,57 @@ export async function fetchAlerts(state?: string, country?: string): Promise<{ s
 const ALIASES: Record<string, string> = {
   'dilli': 'new delhi',
   'delhi': 'new delhi',
+  'delhy': 'new delhi',
+  'gwalor': 'gwalior',
+  'gwaliar': 'gwalior',
+  'gwaliyor': 'gwalior',
+  'bhopll': 'bhopal',
+  'bhopale': 'bhopal',
   'banglore': 'bengaluru',
   'bangalore': 'bengaluru',
+  'bangaluru': 'bengaluru',
   'bombay': 'mumbai',
+  'mumbay': 'mumbai',
   'calcutta': 'kolkata',
+  'kolkataa': 'kolkata',
   'madras': 'chennai',
+  'chenai': 'chennai',
+  'channai': 'chennai',
   'gurgaon': 'gurugram',
   'trivandrum': 'thiruvananthapuram',
   'pondicherry': 'puducherry',
   'cochin': 'kochi',
   'baroda': 'vadodara',
   'banaras': 'varanasi',
-  'kashi': 'varanasi'
+  'kashi': 'varanasi',
+  'jaipr': 'jaipur',
+  'waynad': 'wayanad',
+  'tokiyo': 'tokyo',
+  'pariss': 'paris',
+  'londn': 'london'
 };
+
+function levenshteinDistance(s1: string, s2: string): number {
+  const track = Array(s2.length + 1).fill(null).map(() =>
+    Array(s1.length + 1).fill(null));
+  for (let i = 0; i <= s1.length; i += 1) {
+    track[0][i] = i;
+  }
+  for (let j = 0; j <= s2.length; j += 1) {
+    track[j][0] = j;
+  }
+  for (let j = 1; j <= s2.length; j += 1) {
+    for (let i = 1; i <= s1.length; i += 1) {
+      const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(
+        track[j][i - 1] + 1,
+        track[j - 1][i] + 1,
+        track[j - 1][i - 1] + indicator,
+      );
+    }
+  }
+  return track[s2.length][s1.length];
+}
 
 const STOP_WORDS = new Set([
   'weather', 'forecast', 'today', 'tomorrow', 'tell', 'me', 'about', 'how', 'is',
@@ -558,6 +596,63 @@ export function findLocationsInText(text: string): LocationItem[] {
           break;
         }
       }
+    }
+  }
+
+  // 4. Intelligent Fuzzy Matching (Typo & Phonetic Recovery Engine)
+  if (matched.length === 0) {
+    const tokens = queryLower.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3 && !STOP_WORDS.has(w));
+    let bestMatch: LocationItem | null = null;
+    let bestScore = 0;
+
+    for (const token of tokens) {
+      // Check ALIASES fuzzy match
+      for (const [alias, canonical] of Object.entries(ALIASES)) {
+        const dist = levenshteinDistance(alias, token);
+        const maxLen = Math.max(alias.length, token.length);
+        const score = 1 - dist / maxLen;
+        if (score >= 0.70 && score > bestScore) {
+          const found = INDIAN_DISTRICTS.find(d => d.name.toLowerCase().includes(canonical)) || WORLD_CAPITALS.find(c => c.name.toLowerCase().includes(canonical));
+          if (found) {
+            bestMatch = found;
+            bestScore = score;
+          }
+        }
+      }
+
+      // Check Indian Districts fuzzy match
+      for (const d of INDIAN_DISTRICTS) {
+        const variations = getVariations(d.name);
+        for (const v of variations) {
+          const vLower = v.toLowerCase();
+          const dist = levenshteinDistance(vLower, token);
+          const maxLen = Math.max(vLower.length, token.length);
+          const score = 1 - dist / maxLen;
+          if (score >= 0.70 && score > bestScore) {
+            bestMatch = d;
+            bestScore = score;
+          }
+        }
+      }
+
+      // Check World Capitals fuzzy match
+      for (const c of WORLD_CAPITALS) {
+        const variations = getVariations(c.name);
+        for (const v of variations) {
+          const vLower = v.toLowerCase();
+          const dist = levenshteinDistance(vLower, token);
+          const maxLen = Math.max(vLower.length, token.length);
+          const score = 1 - dist / maxLen;
+          if (score >= 0.70 && score > bestScore) {
+            bestMatch = c;
+            bestScore = score;
+          }
+        }
+      }
+    }
+
+    if (bestMatch) {
+      matched.push(bestMatch);
     }
   }
 

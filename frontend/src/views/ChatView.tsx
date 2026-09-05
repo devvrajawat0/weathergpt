@@ -112,7 +112,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
   };
 
   const [voices, setVoices] = useState<any[]>([]);
-  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>('');
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>('auto');
 
   // Fetch available Web Speech voices
   useEffect(() => {
@@ -120,18 +120,6 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
       if (!('speechSynthesis' in window)) return;
       const available = window.speechSynthesis.getVoices();
       setVoices(available);
-      if (available.length > 0 && !selectedVoiceURI) {
-        const preferred = available.find((v: any) => 
-          v.name.includes('Natural') || 
-          v.name.includes('Google US English') || 
-          v.name.includes('Google UK English Female') ||
-          v.name.includes('Aria') ||
-          v.name.includes('Jenny') ||
-          v.name.includes('Neural') ||
-          (v.lang.startsWith('en') && v.name.includes('Google'))
-        ) || available.find((v: any) => v.lang.startsWith('en')) || available[0];
-        if (preferred) setSelectedVoiceURI(preferred.voiceURI);
-      }
     };
 
     updateVoices();
@@ -140,22 +128,58 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
     }
   }, []);
 
-  // High-Quality Human Voice Text-to-Speech reader
+  // Clean Markdown symbols into natural spoken prose
+  const sanitizeMarkdownForSpeech = (markdown: string): string => {
+    return markdown
+      .replace(/^#{1,6}\s+/gm, '') // Remove ### headings
+      .replace(/(\*\*|__)(.*?)\1/g, '$2') // Remove bold
+      .replace(/(\*|_)(.*?)\1/g, '$2') // Remove italics
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links
+      .replace(/`([^`]+)`/g, '$1') // Remove inline code
+      .replace(/\|/g, ', ') // Replace table separators with pauses
+      .replace(/-{3,}/g, '')
+      .replace(/^\s*[-+*]\s+/gm, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  // High-Quality Human Voice Text-to-Speech Engine (Hindi, English, Hinglish)
   const speakText = (text: string) => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const cleanText = text.replace(/[*#_`|~]/g, '');
+    
+    const cleanText = sanitizeMarkdownForSpeech(text);
+    if (!cleanText) return;
+    
     const utterance = new SpeechSynthesisUtterance(cleanText);
-
-    // Use Selected Voice
     const available = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
-    const chosenVoice = available.find((v: any) => v.voiceURI === selectedVoiceURI) || 
-      available.find((v: any) => v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Aria')) || 
-      available[0];
+
+    // Check for Hindi Devanagari script or Hinglish words
+    const isHindiOrHinglish = /[\u0900-\u097F]/.test(cleanText) || 
+      /\b(mausam|baarish|barish|garmi|thand|hawa|aaj|kal|kaisa|kaisi|samay|temp|namaste)\b/i.test(cleanText);
+
+    let chosenVoice: any = null;
+
+    if (selectedVoiceURI !== 'auto') {
+      chosenVoice = available.find((v: any) => v.voiceURI === selectedVoiceURI);
+    }
+
+    if (!chosenVoice) {
+      if (isHindiOrHinglish) {
+        chosenVoice = available.find((v: any) => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi')) ||
+          available.find((v: any) => v.lang.includes('IN'));
+      } else {
+        chosenVoice = available.find((v: any) => v.name.includes('Natural') || v.name.includes('Google US English') || v.name.includes('Google UK English Female') || v.name.includes('Aria') || v.name.includes('Jenny')) ||
+          available.find((v: any) => v.lang.startsWith('en')) ||
+          available[0];
+      }
+    }
 
     if (chosenVoice) {
       utterance.voice = chosenVoice;
+      utterance.lang = chosenVoice.lang;
     }
+
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
@@ -250,14 +274,45 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
               <select
                 value={selectedVoiceURI}
                 onChange={(e) => setSelectedVoiceURI(e.target.value)}
-                className="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer max-w-[150px] truncate"
-                title="Select Voice for Text-to-Speech"
+                className="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer max-w-[170px] truncate"
+                title="Select Voice & Language for Text-to-Speech"
               >
-                {voices.map((v: any) => (
-                  <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-900 text-white">
-                    {v.name.replace(/Microsoft|Google|Desktop|English/gi, '').trim() || v.name} ({v.lang})
-                  </option>
-                ))}
+                <option value="auto" className="bg-slate-900 text-cyan-300 font-semibold">🌐 Auto-Detect Voice</option>
+                <optgroup label="🇮🇳 Hindi & Hinglish">
+                  {voices.filter((v: any) => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi')).map((v: any) => (
+                    <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-900 text-amber-300">
+                      🇮🇳 {v.name.replace(/Microsoft|Google|Desktop/gi, '').trim()} ({v.lang})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🇮🇳 English (India)">
+                  {voices.filter((v: any) => v.lang.includes('IN') && !v.lang.startsWith('hi')).map((v: any) => (
+                    <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-900 text-emerald-300">
+                      🇮🇳 {v.name.replace(/Microsoft|Google|Desktop/gi, '').trim()} ({v.lang})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🇺🇸 English (US)">
+                  {voices.filter((v: any) => v.lang.includes('US')).map((v: any) => (
+                    <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-900 text-blue-300">
+                      🇺🇸 {v.name.replace(/Microsoft|Google|Desktop/gi, '').trim()} ({v.lang})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🇬🇧 English (UK)">
+                  {voices.filter((v: any) => v.lang.includes('GB')).map((v: any) => (
+                    <option key={v.voiceURI} value={v.voiceURI} className="bg-slate-900 text-purple-300">
+                      🇬🇧 {v.name.replace(/Microsoft|Google|Desktop/gi, '').trim()} ({v.lang})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🌐 All System Voices">
+                  {voices.map((v: any) => (
+                    <option key={`all-${v.voiceURI}`} value={v.voiceURI} className="bg-slate-900 text-slate-300">
+                      🗣️ {v.name.replace(/Microsoft|Google|Desktop/gi, '').trim()} ({v.lang})
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           )}
