@@ -420,12 +420,6 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentLocation, initialProm
           >
             🍲 Food & Drink Pairings
           </button>
-          <button
-            onClick={() => handleSend("Plan a trip to Manali with transport and scenic stay")}
-            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-500/40 hover:to-teal-500/40 text-emerald-200 border border-emerald-500/40 transition font-semibold"
-          >
-            ✈️ Plan Trip to Manali
-          </button>
         </div>
       </div>
 

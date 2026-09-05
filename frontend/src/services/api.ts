@@ -475,8 +475,7 @@ const STOP_WORDS = new Set([
   'report', 'now', 'current', 'right', 'should', 'i', 'wear', 'cloth', 'clothes',
   'clothing', 'outfit', 'umbrella', 'farmer', 'agri', 'crop', 'irrigation',
   'farming', 'advice', 'advisory', 'city', 'district', 'town', 'place',
-  'plan', 'planning', 'trip', 'travel', 'tour', 'itinerary', 'vacation', 'visit',
-  'hotel', 'stay', 'view', 'views', 'food', 'eat', 'drink', 'dish', 'cuisine'
+  'food', 'eat', 'drink', 'dish', 'cuisine'
 ]);
 
 export function findLocationsInText(text: string): LocationItem[] {
@@ -752,61 +751,6 @@ Here is the real-time weather comparison between **${pLoc}** and **${sLoc}**:
 - **Temperature Difference**: **${warmerLoc}** is currently warmer by **${Math.abs(Number(tempDiff))}°C**.
 - **Travel & Comfort**: ${pCurr.temp > 30 ? `Stay hydrated in ${pLoc} as conditions are warm.` : `Enjoy pleasant weather in ${pLoc}.`}
 - **Air Quality**: ${pAqi.usAqi > 150 ? `⚠️ Outdoor mask advised in ${pLoc} due to elevated AQI (${pAqi.usAqi}).` : `Air quality is safe.`}`;
-  }
-  // Scenario A2: Trip / Travel / Vacation / Itinerary Planning
-  else if (queryLower.includes('trip') || queryLower.includes('travel') || queryLower.includes('tour') || queryLower.includes('visit') || queryLower.includes('itinerary') || queryLower.includes('vacation') || queryLower.includes('stay') || queryLower.includes('hotel') || queryLower.includes('view') || queryLower.includes('plan')) {
-    const today = pDaily[0] || {};
-    const tomorrow = pDaily[1] || {};
-
-    let driveTime = "4 to 5 hours";
-    let trainTime = "3.5 to 4.5 hours (Express / Vande Bharat)";
-    let flightTime = "1 to 1.5 hours (Direct Flight + airport transfer)";
-    let busTime = "5 to 6 hours (AC Volvo Sleeper)";
-
-    if (weatherContexts.length >= 2) {
-      const loc1 = weatherContexts[0].locObj;
-      const loc2 = weatherContexts[1].locObj;
-      const dist = Math.round(Math.hypot((loc1.lat - loc2.lat) * 111, (loc1.lon - loc2.lon) * 100));
-      const hours = (dist / 70).toFixed(1);
-      driveTime = `~${hours} hours (${dist} km via Highway)`;
-      trainTime = `~${(Number(hours) * 1.1).toFixed(1)} hours (Superfast Express)`;
-      flightTime = dist > 300 ? `~1.5 hours (Direct Flight)` : `Direct Road/Train recommended (${dist} km)`;
-      busTime = `~${(Number(hours) * 1.3).toFixed(1)} hours (Volvo Deluxe)`;
-    }
-
-    reply = `### ✈️ Trip & Travel Itinerary Plan for **${pLoc}**
-
-Planning a trip to **${pLoc}**! Here is your complete travel guide with modes of transport, travel time, best stays with scenic views, and a weather-aligned itinerary:
-
-#### 🚗 Modes of Transport & Estimated Travel Time:
-- **🚘 Car / Self-Drive**: **${driveTime}** — Scenic highway route.
-- **🚆 Railway / Train**: **${trainTime}** — Comfortable and punctual.
-- **✈️ Flight**: **${flightTime}** — Quickest option for long distances.
-- **🚌 Deluxe Bus**: **${busTime}** — Convenient overnight options available.
-
-#### 🏨 Best Places to Stay for Best Scenic Views:
-- **Panoramic View Resort**: Cliffside boutique resort / Hilltop wooden chalets offering 360° valley & sunrise views.
-- **Heritage / Beachfront Stay**: Lakefront heritage hotel or beachfront stay within walking distance of prime attractions.
-- **Budget / Central Stay**: Cozy boutique homestay near the main city center / Mall road.
-
-#### 🌅 Top Scenic View Points to Visit:
-1. **Sunset / Sunrise Point**: Panoramic hilltop overlook for sunrise and sunset photography.
-2. **Heritage Landmark & Market**: Historic fort/monument or vibrant local craft market.
-3. **Nature / Viewpoint Reserve**: Scenic nature trail, lake promenade, or viewpoint deck.
-
-#### 📅 Weather-Aligned 2-Day Itinerary Plan:
-- **Day 1 (Current Weather: ${pCurr.temp}°C, ${pCurr.condition})**:
-  - *Morning*: Arrival & check-in at scenic view stay; morning tea with valley/city view.
-  - *Afternoon*: Visit historic landmarks & explore local culture (UV Index: ${pCurr.uvIndex}).
-  - *Evening*: Sunset viewpoint & evening street food exploration.
-- **Day 2 (Forecast: ${tomorrow.maxTemp}°C / ${tomorrow.minTemp}°C, ${tomorrow.precipProbability}% rain probability)**:
-  - *Morning*: Early morning viewpoint visit for clear panoramic photography.
-  - *Afternoon*: Shopping for local handicrafts & souvenirs.
-  - *Evening*: Departure return journey.
-
-#### 🎒 Packing & Clothing Advice:
-- **Clothing**: ${pCurr.temp > 28 ? "Lightweight cotton clothes, sunglasses, and cap." : "Layer up with a warm jacket/sweater."}
-- **Rain Gear**: ${today.precipProbability > 40 || tomorrow.precipProbability > 40 ? "☔ Carry a compact umbrella or raincoat as rain is likely." : "☀️ Low rain probability."}`;
   }
   // Scenario B: Rain / Precipitation query
   else if (queryLower.includes('rain') || queryLower.includes('precipitation') || queryLower.includes('umbrella') || queryLower.includes('shower')) {
