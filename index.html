@@ -14,25 +14,25 @@
       min-height: 100vh;
     }
     .glass-panel {
-      background: rgba(15, 23, 42, 0.65);
+      background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 1.25rem;
     }
     .glass-card {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.09);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 1rem;
-      transition: all 0.2s ease-in-out;
+      transition: all 0.25s ease-in-out;
     }
     .glass-card:hover {
-      background: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.16);
       transform: translateY(-2px);
     }
     .glass-input {
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.8);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
       border-radius: 0.75rem;
@@ -53,22 +53,22 @@
   </style>
 </head>
 <body class="relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
-  <!-- Dynamic HTML5 Canvas Weather Animation -->
-  <canvas id="weatherCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <!-- Dynamic 60 FPS HTML5 Canvas Background -->
+  <canvas id="weatherCanvas" class="fixed inset-0 pointer-events-none z-0 transition-opacity duration-1000"></canvas>
 
   <div class="relative z-10 flex flex-col min-h-screen">
     <!-- Navbar -->
-    <header class="sticky top-0 z-50 px-4 py-3 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
+    <header class="sticky top-0 z-50 px-4 py-3 bg-slate-950/85 backdrop-blur-md border-b border-white/10">
       <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
         <div class="flex items-center justify-between w-full md:w-auto">
           <div class="flex items-center gap-2">
             <div class="p-2 bg-blue-600/30 rounded-xl border border-blue-400/40 text-blue-400">
               🌤️
             </div>
-            <h1 class="text-xl font-bold text-white tracking-wide">
+            <h1 class="text-xl font-bold text-white tracking-wide" id="navAppName">
               Weather<span class="text-blue-400">GPT</span>
             </h1>
-            <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-400/30">SIH Edition</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-400/30" id="navBadge">SIH Edition</span>
           </div>
         </div>
 
@@ -76,8 +76,8 @@
         <div class="relative w-full md:max-w-md">
           <div class="relative flex items-center">
             <input id="searchInput" type="text" placeholder="Search city or district (e.g. Gwalior, Delhi, London)..." class="w-full pl-4 pr-24 py-2.5 text-sm glass-input placeholder-slate-400" />
-            <button id="voiceBtn" title="Voice Search" class="absolute right-14 text-slate-400 hover:text-white p-1">🎙️</button>
-            <button id="searchBtn" class="absolute right-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg transition">Search</button>
+            <button id="voiceBtn" onclick="startVoiceSearch()" title="Voice Search" class="absolute right-14 text-slate-400 hover:text-white p-1">🎙️</button>
+            <button id="searchBtn" onclick="triggerSearch()" class="absolute right-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg transition">Search</button>
           </div>
           <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden shadow-2xl z-50 max-h-60 overflow-y-auto"></div>
         </div>
@@ -92,21 +92,21 @@
       </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Content -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
       
       <!-- Severe Weather Popup Alert Modal -->
-      <div id="alertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+      <div id="alertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
         <div class="relative w-full max-w-lg glass-panel p-6 border-red-500/50 shadow-2xl text-white">
           <div class="flex items-center justify-between border-b border-red-500/30 pb-3 mb-3">
             <div class="flex items-center gap-2 text-red-400 font-bold">
-              ⚠️ <span id="alertSeverity" class="uppercase">SEVERE WARNING</span>
+              ⚠️ <span id="alertSeverity" class="uppercase">SEVERE WEATHER ALERT</span>
             </div>
-            <button onclick="dismissAlert()" class="text-slate-400 hover:text-white">✕</button>
+            <button onclick="dismissAlert()" class="text-slate-400 hover:text-white text-lg">✕</button>
           </div>
-          <h2 id="alertHeadline" class="text-lg font-bold text-white mb-2">Severe Weather Alert</h2>
+          <h2 id="alertHeadline" class="text-lg font-bold text-white mb-2">Severe Warning</h2>
           <p id="alertDesc" class="text-xs text-slate-200 leading-relaxed mb-4"></p>
-          <button onclick="dismissAlert()" class="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl">Acknowledge & Dismiss</button>
+          <button id="alertDismissBtn" onclick="dismissAlert()" class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg">Acknowledge & Dismiss</button>
         </div>
       </div>
 
@@ -122,7 +122,9 @@
               </div>
               <p id="heroDate" class="text-xs text-slate-300 mt-1"></p>
             </div>
-            <button id="ttsHeroBtn" onclick="speakCurrentWeather()" class="px-4 py-2 text-xs font-semibold bg-blue-600/30 border border-blue-400/40 text-blue-200 rounded-xl hover:bg-blue-600/50">🔊 Listen Weather</button>
+            <button id="ttsHeroBtn" onclick="speakCurrentWeather()" class="px-4 py-2 text-xs font-semibold bg-blue-600/30 border border-blue-400/40 text-blue-200 rounded-xl hover:bg-blue-600/50 flex items-center gap-1.5">
+              🔊 <span id="lblListen">Listen Weather</span>
+            </button>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-6 items-center">
@@ -139,28 +141,28 @@
               <div class="glass-card p-3.5 flex items-center gap-3">
                 <span class="text-xl">💧</span>
                 <div>
-                  <span class="text-slate-400 block">Humidity</span>
+                  <span class="text-slate-400 block" id="lblHumidity">Humidity</span>
                   <span id="heroHumidity" class="text-sm font-bold text-white">65%</span>
                 </div>
               </div>
               <div class="glass-card p-3.5 flex items-center gap-3">
                 <span class="text-xl">💨</span>
                 <div>
-                  <span class="text-slate-400 block">Wind Speed</span>
+                  <span class="text-slate-400 block" id="lblWindSpeed">Wind Speed</span>
                   <span id="heroWind" class="text-sm font-bold text-white">14 km/h</span>
                 </div>
               </div>
               <div class="glass-card p-3.5 flex items-center gap-3">
                 <span class="text-xl">⏲️</span>
                 <div>
-                  <span class="text-slate-400 block">Pressure</span>
+                  <span class="text-slate-400 block" id="lblPressure">Pressure</span>
                   <span id="heroPressure" class="text-sm font-bold text-white">1013 hPa</span>
                 </div>
               </div>
               <div class="glass-card p-3.5 flex items-center gap-3">
                 <span class="text-xl">☀️</span>
                 <div>
-                  <span class="text-slate-400 block">UV Index</span>
+                  <span class="text-slate-400 block" id="lblUVIndex">UV Index</span>
                   <span id="heroUV" class="text-sm font-bold text-white">5 / 12</span>
                 </div>
               </div>
@@ -169,17 +171,17 @@
 
           <!-- Solar Timeline Arc -->
           <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-300">
-            <span>🌅 Sunrise: <strong id="heroSunrise" class="text-white">06:15 AM</strong></span>
+            <span>🌅 <span id="lblSunrise">Sunrise</span>: <strong id="heroSunrise" class="text-white">06:15 AM</strong></span>
             <div class="flex-1 max-w-xs h-1.5 bg-white/10 rounded-full mx-3 overflow-hidden">
               <div class="h-full bg-gradient-to-r from-amber-400 via-blue-400 to-purple-500 rounded-full w-2/3"></div>
             </div>
-            <span>🌇 Sunset: <strong id="heroSunset" class="text-white">06:45 PM</strong></span>
+            <span>🌇 <span id="lblSunset">Sunset</span>: <strong id="heroSunset" class="text-white">06:45 PM</strong></span>
           </div>
         </div>
 
         <!-- Quick Switch City Chips -->
         <div class="glass-panel p-4">
-          <span class="text-xs font-semibold text-slate-300 block mb-2">Popular Indian Cities</span>
+          <span class="text-xs font-semibold text-slate-300 block mb-2" id="lblPopularCities">Popular Indian Cities</span>
           <div class="flex flex-wrap gap-2" id="cityChips"></div>
         </div>
 
@@ -187,7 +189,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="glass-panel p-5">
             <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-              <h3 class="font-bold text-white text-sm">💨 Air Quality Index (AQI)</h3>
+              <h3 class="font-bold text-white text-sm" id="lblAQITitle">💨 Air Quality Index (AQI)</h3>
               <span id="aqiBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Good</span>
             </div>
             <div class="text-3xl font-extrabold text-white mb-2" id="aqiValue">42 <span class="text-xs font-normal text-slate-400">US AQI</span></div>
@@ -196,7 +198,7 @@
 
           <div class="glass-panel p-5">
             <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
-              <h3 class="font-bold text-white text-sm">☀️ UV Index & Solar Protection</h3>
+              <h3 class="font-bold text-white text-sm" id="lblUVTitle">☀️ UV Index & Protection</h3>
               <span id="uvBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Moderate</span>
             </div>
             <div class="text-3xl font-extrabold text-white mb-2" id="uvValue">5 <span class="text-xs font-normal text-slate-400">Index</span></div>
@@ -206,7 +208,7 @@
 
         <!-- 24-Hour & 7-Day Weather Forecasts -->
         <div class="glass-panel p-5 space-y-4">
-          <h3 class="font-bold text-white text-sm flex items-center gap-2">⏰ 24-Hour & 7-Day Forecast</h3>
+          <h3 class="font-bold text-white text-sm flex items-center gap-2" id="lblForecastTitle">⏰ 24-Hour & 7-Day Forecast</h3>
           <div id="hourlyStrip" class="flex gap-3 overflow-x-auto pb-2"></div>
           <div id="dailyList" class="space-y-2 pt-2 border-t border-white/10"></div>
         </div>
@@ -214,19 +216,19 @@
         <!-- Weather-Tailored Food & Clothing Recommendations -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="glass-panel p-5">
-            <h3 class="font-bold text-white text-sm mb-2">🍲 Culinary Picks (Food & Drinks)</h3>
+            <h3 class="font-bold text-white text-sm mb-2" id="lblFoodTitle">🍲 Culinary Picks (Food & Drinks)</h3>
             <div id="foodBox" class="space-y-2 text-xs text-slate-200 bg-white/5 p-3 rounded-xl border border-white/10"></div>
           </div>
 
           <div class="glass-panel p-5">
-            <h3 class="font-bold text-white text-sm mb-2">👕 Outfit & Gear Recommendations</h3>
+            <h3 class="font-bold text-white text-sm mb-2" id="lblClothingTitle">👕 Outfit & Gear Recommendations</h3>
             <div id="clothingBox" class="space-y-2 text-xs text-slate-200 bg-white/5 p-3 rounded-xl border border-white/10"></div>
           </div>
         </div>
 
         <!-- Smart Farmer & Agriculture Advisory -->
         <div class="glass-panel p-5 border border-emerald-500/30">
-          <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2">🌱 Agriculture & Farmer Advisory</h3>
+          <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2" id="lblFarmerTitle">🌱 Agriculture & Farmer Advisory</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs" id="farmerGrid"></div>
         </div>
       </section>
@@ -237,40 +239,40 @@
           <div class="flex items-center gap-2">
             <span class="text-2xl">🤖</span>
             <div>
-              <h2 class="font-bold text-white text-sm">WeatherGPT AI Assistant</h2>
-              <p class="text-[11px] text-emerald-400">Ask weather queries or compare multiple cities (e.g. "Compare Gwalior and Leh")</p>
+              <h2 class="font-bold text-white text-sm" id="lblChatHeaderTitle">WeatherGPT AI Assistant</h2>
+              <p class="text-[11px] text-emerald-400" id="lblChatHeaderSub">Ask weather queries or compare multiple cities (e.g. "Compare Gwalior and Leh")</p>
             </div>
           </div>
         </div>
 
         <div id="chatMessages" class="glass-panel p-4 h-[60vh] overflow-y-auto space-y-3">
-          <div class="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-100 max-w-[85%]">
+          <div className="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-100 max-w-[85%]" id="chatWelcomeMsg">
             🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city, hourly forecast, or multi-city comparison!
           </div>
         </div>
 
         <div class="flex gap-2">
           <input id="chatInput" type="text" placeholder="Ask WeatherGPT AI (e.g. Is it raining in Mumbai?)..." class="flex-1 px-4 py-3 text-sm glass-input placeholder-slate-400" onkeydown="if(event.key==='Enter') sendChatMessage()" />
-          <button onclick="sendChatMessage()" class="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl">Send</button>
+          <button id="chatSendBtn" onclick="sendChatMessage()" class="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl">Send</button>
         </div>
       </section>
 
       <!-- TAB 3: TRIP PLANNER -->
       <section id="viewTrip" class="hidden space-y-4 max-w-4xl mx-auto">
         <div class="glass-panel p-6">
-          <h2 class="font-bold text-white text-base mb-4">🧭 Weather-Aware Multi-City Trip Planner</h2>
+          <h2 class="font-bold text-white text-base mb-4" id="lblTripTitle">🧭 Weather-Aware Multi-City Trip Planner</h2>
           <div class="space-y-4">
             <div>
-              <label class="text-xs text-slate-300 block mb-1">Add Cities</label>
+              <label class="text-xs text-slate-300 block mb-1" id="lblTripInputHeader">Add Destinations</label>
               <div class="flex gap-2">
                 <input id="tripCityInput" type="text" placeholder="Enter city (e.g. Jaipur, Goa, Manali)..." class="flex-1 px-4 py-2 text-sm glass-input" />
-                <button onclick="addTripCity()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl">+ Add</button>
+                <button id="tripAddBtn" onclick="addTripCity()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl">+ Add</button>
               </div>
             </div>
 
             <div id="tripCityChips" class="flex flex-wrap gap-2"></div>
 
-            <button onclick="generateTripItinerary()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg">Generate Smart Itinerary & Packing Guide</button>
+            <button id="tripGenBtn" onclick="generateTripItinerary()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg">Generate Smart Itinerary & Packing Guide</button>
           </div>
         </div>
 
@@ -280,27 +282,290 @@
     </main>
 
     <!-- Footer -->
-    <footer className="py-6 border-t border-white/10 text-center text-xs text-slate-400 bg-slate-950/80 mt-auto">
-      <p>WeatherGPT Platform • Smart India Hackathon (SIH) Project</p>
-      <p class="mt-1 text-slate-500">Powered by Open-Meteo Satellite Meteorological Data Models</p>
+    <footer class="py-6 border-t border-white/10 text-center text-xs text-slate-400 bg-slate-950/80 mt-auto">
+      <p id="footerTitle">WeatherGPT Platform • Smart India Hackathon (SIH) Project</p>
+      <p class="mt-1 text-slate-500" id="footerSub">Powered by Open-Meteo Satellite Meteorological Data Models</p>
     </footer>
   </div>
 
   <script>
-    // Global State
+    // ----------------------------------------------------
+    // DYNAMIC HTML5 CANVAS ANIMATION ENGINE (60 FPS)
+    // ----------------------------------------------------
+    const canvas = document.getElementById('weatherCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.onresize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    let currentAnimType = 'clear-day';
+    let particles = [];
+    let animTimer = 0;
+
+    function initParticles(type) {
+      currentAnimType = type;
+      particles = [];
+      const count = type === 'rain' || type === 'thunderstorm' ? 140 : type === 'snow' ? 80 : 35;
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * 3 + 1,
+          length: Math.random() * 22 + 10,
+          speedY: Math.random() * 12 + 6,
+          speedX: Math.random() * 2 - 1,
+          opacity: Math.random() * 0.7 + 0.3
+        });
+      }
+    }
+
+    function renderCanvasAnimation() {
+      ctx.clearRect(0, 0, width, height);
+
+      if (currentAnimType === 'clear-day') {
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#1e3a8a');
+        grad.addColorStop(0.5, '#3b82f6');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Sun Glow Rays
+        ctx.beginPath();
+        ctx.arc(width * 0.85, 110, 85, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.3)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(width * 0.85, 110, 45, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.85)';
+        ctx.fill();
+      } else if (currentAnimType === 'clear-night') {
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#030712');
+        grad.addColorStop(0.7, '#0f172a');
+        grad.addColorStop(1, '#1e1b4b');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Twinkling Stars
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+          ctx.fill();
+        });
+
+        // Crescent Moon
+        ctx.beginPath();
+        ctx.arc(width * 0.85, 110, 40, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(243, 244, 246, 0.9)';
+        ctx.fill();
+      } else if (currentAnimType === 'cloudy' || currentAnimType === 'fog') {
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#334155');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Drifting Volumetric Clouds
+        particles.forEach(p => {
+          p.x += p.speedX * 0.3;
+          if (p.x > width) p.x = 0;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius * 25, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(203, 213, 225, ${p.opacity * 0.08})`;
+          ctx.fill();
+        });
+      } else if (currentAnimType === 'rain' || currentAnimType === 'thunderstorm') {
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#0f172a');
+        grad.addColorStop(1, '#1e293b');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        if (currentAnimType === 'thunderstorm') {
+          animTimer++;
+          if (animTimer % 160 < 5) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fillRect(0, 0, width, height);
+          }
+        }
+
+        // Falling Rain Streaks
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        particles.forEach(p => {
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + p.speedX, p.y + p.length);
+          p.y += p.speedY;
+          p.x += p.speedX;
+          if (p.y > height) { p.y = -20; p.x = Math.random() * width; }
+        });
+        ctx.stroke();
+      } else if (currentAnimType === 'snow') {
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, '#1e293b');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+          ctx.fill();
+          p.y += p.speedY * 0.25;
+          p.x += Math.sin(p.y * 0.02);
+          if (p.y > height) { p.y = -10; p.x = Math.random() * width; }
+        });
+      }
+
+      requestAnimationFrame(renderCanvasAnimation);
+    }
+    initParticles('clear-day');
+    renderCanvasAnimation();
+
+    // ----------------------------------------------------
+    // FULL HINDI & ENGLISH DICTIONARY LOCALIZATION
+    // ----------------------------------------------------
+    const i18n = {
+      en: {
+        appName: 'WeatherGPT',
+        badge: 'SIH Edition',
+        searchPlaceholder: 'Search city or district (e.g. Gwalior, Delhi, London)...',
+        searchBtn: 'Search',
+        dashboardTab: 'Dashboard',
+        chatTab: '💬 AI Chat',
+        tripTab: '🧭 Trip Planner',
+        listen: 'Listen Weather',
+        humidity: 'Humidity',
+        windSpeed: 'Wind Speed',
+        pressure: 'Pressure',
+        uvIndex: 'UV Index',
+        sunrise: 'Sunrise',
+        sunset: 'Sunset',
+        popularCities: 'Popular Indian Cities',
+        aqiTitle: '💨 Air Quality Index (AQI)',
+        uvTitle: '☀️ UV Index & Protection',
+        forecastTitle: '⏰ 24-Hour & 7-Day Forecast',
+        foodTitle: '🍲 Culinary Picks (Food & Drinks)',
+        clothingTitle: '👕 Outfit & Gear Recommendations',
+        farmerTitle: '🌱 Agriculture & Farmer Advisory',
+        chatHeaderTitle: 'WeatherGPT AI Assistant',
+        chatHeaderSub: 'Ask weather queries or compare multiple cities (e.g. "Compare Gwalior and Leh")',
+        chatWelcome: '🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city, hourly forecast, or multi-city comparison!',
+        chatPlaceholder: 'Ask WeatherGPT AI (e.g. Is it raining in Mumbai?)...',
+        sendBtn: 'Send',
+        tripTitle: '🧭 Weather-Aware Multi-City Trip Planner',
+        tripInputHeader: 'Add Destinations',
+        tripCityPlaceholder: 'Enter city (e.g. Jaipur, Goa, Manali)...',
+        addBtn: '+ Add',
+        tripGenBtn: 'Generate Smart Itinerary & Packing Guide',
+        footerTitle: 'WeatherGPT Platform • Smart India Hackathon (SIH) Project',
+        footerSub: 'Powered by Open-Meteo Satellite Meteorological Data Models',
+        alertSeverity: 'SEVERE WEATHER ALERT',
+        alertDismiss: 'Acknowledge & Dismiss'
+      },
+      hi: {
+        appName: 'मौसमGPT',
+        badge: 'एसआईएच संस्करण',
+        searchPlaceholder: 'शहर या ज़िला खोजें (जैसे: ग्वालियर, भोपाल, दिल्ली)...',
+        searchBtn: 'खोजें',
+        dashboardTab: 'डैशबोर्ड',
+        chatTab: '💬 एआई चैट',
+        tripTab: '🧭 यात्रा योजनाकार',
+        listen: 'मौसम सुनें',
+        humidity: 'आर्द्रता (Humidity)',
+        windSpeed: 'हवा की गति',
+        pressure: 'वायुमंडलीय दबाव',
+        uvIndex: 'यूवी इंडेक्स',
+        sunrise: 'सूर्योदय',
+        sunset: 'सूर्यास्त',
+        popularCities: 'प्रमुख भारतीय शहर',
+        aqiTitle: '💨 वायु गुणवत्ता सूचकांक (AQI)',
+        uvTitle: '☀️ यूवी इंडेक्स एवं धूप सुरक्षा',
+        forecastTitle: '⏰ 24-घंटे एवं 7-दिवसीय मौसम पूर्वानुमान',
+        foodTitle: '🍲 खान-पान सुझाव (भोजन एवं पेय)',
+        clothingTitle: '👕 वेशभूषा एवं पहनावा सुझाव',
+        farmerTitle: '🌱 कृषि एवं किसान सलाह',
+        chatHeaderTitle: 'मौसमGPT एआई सहायक',
+        chatHeaderSub: 'मौसम संबंधी प्रश्न पूछें या शहरों की तुलना करें (जैसे: ग्वालियर और लेह की तुलना)',
+        chatWelcome: '🤖 नमस्ते! मैं मौसमGPT सहायक हूँ। मुझसे किसी भी शहर के मौसम, प्रति घंटे पूर्वानुमान, या तुलना के बारे में पूछें!',
+        chatPlaceholder: 'मौसमGPT एआई से पूछें (जैसे: क्या मुंबई में बारिश हो रही है?)...',
+        sendBtn: 'भेजें',
+        tripTitle: '🧭 मौसम-आधारित बहु-शहर यात्रा योजनाकार',
+        tripInputHeader: 'गंतव्य शहर जोड़ें',
+        tripCityPlaceholder: 'शहर का नाम दर्ज करें (जैसे: जयपुर, गोवा, मनाली)...',
+        addBtn: '+ जोड़ें',
+        tripGenBtn: 'स्मार्ट यात्रा योजना एवं पैंकिंग गाइड बनाएं',
+        footerTitle: 'मौसमGPT प्लेटफ़ॉर्म • स्मार्ट इंडिया हैकथॉन (SIH) प्रोजेक्ट',
+        footerSub: 'ओपन-मीटियो उपग्रह मौसम डेटा मॉडल द्वारा संचालित',
+        alertSeverity: 'गंभीर मौसम चेतावनी',
+        alertDismiss: 'स्वीकार करें एवं बंद करें'
+      }
+    };
+
+    let activeLang = 'en';
     let currentGeo = { name: 'Gwalior', latitude: 26.2235, longitude: 78.1792, country: 'India' };
     let currentWeatherData = null;
-    let activeLang = 'en';
     let tripCities = ['Gwalior', 'Jaipur', 'Shimla'];
-
-    // City Quick Chips
     const POPULAR_CITIES = ['Gwalior', 'New Delhi', 'Mumbai', 'Bengaluru', 'Bhopal', 'Jaipur', 'Varanasi', 'Kolkata', 'Kochi', 'Shimla'];
 
-    function renderCityChips() {
-      const container = document.getElementById('cityChips');
-      container.innerHTML = POPULAR_CITIES.map(c => 
-        `<button onclick="searchAndLoadCity('${c}')" class="px-3 py-1 text-xs rounded-xl border ${c.toLowerCase() === currentGeo.name.toLowerCase() ? 'bg-blue-600/40 text-white border-blue-400 font-bold' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}">${c}</button>`
-      ).join('');
+    function applyLanguage(lang) {
+      activeLang = lang;
+      const dict = i18n[lang];
+
+      document.getElementById('searchInput').placeholder = dict.searchPlaceholder;
+      document.getElementById('searchBtn').innerText = dict.searchBtn;
+      document.getElementById('tabDashboardBtn').innerText = dict.dashboardTab;
+      document.getElementById('tabChatBtn').innerText = dict.chatTab;
+      document.getElementById('tabTripBtn').innerText = dict.tripTab;
+      document.getElementById('langToggleBtn').innerText = lang === 'en' ? 'हिन्दी' : 'English';
+
+      document.getElementById('lblListen').innerText = dict.listen;
+      document.getElementById('lblHumidity').innerText = dict.humidity;
+      document.getElementById('lblWindSpeed').innerText = dict.windSpeed;
+      document.getElementById('lblPressure').innerText = dict.pressure;
+      document.getElementById('lblUVIndex').innerText = dict.uvIndex;
+      document.getElementById('lblSunrise').innerText = dict.sunrise;
+      document.getElementById('lblSunset').innerText = dict.sunset;
+      document.getElementById('lblPopularCities').innerText = dict.popularCities;
+
+      document.getElementById('lblAQITitle').innerText = dict.aqiTitle;
+      document.getElementById('lblUVTitle').innerText = dict.uvTitle;
+      document.getElementById('lblForecastTitle').innerText = dict.forecastTitle;
+      document.getElementById('lblFoodTitle').innerText = dict.foodTitle;
+      document.getElementById('lblClothingTitle').innerText = dict.clothingTitle;
+      document.getElementById('lblFarmerTitle').innerText = dict.farmerTitle;
+
+      document.getElementById('lblChatHeaderTitle').innerText = dict.chatHeaderTitle;
+      document.getElementById('lblChatHeaderSub').innerText = dict.chatHeaderSub;
+      document.getElementById('chatWelcomeMsg').innerText = dict.chatWelcome;
+      document.getElementById('chatInput').placeholder = dict.chatPlaceholder;
+      document.getElementById('chatSendBtn').innerText = dict.sendBtn;
+
+      document.getElementById('lblTripTitle').innerText = dict.tripTitle;
+      document.getElementById('lblTripInputHeader').innerText = dict.tripInputHeader;
+      document.getElementById('tripCityInput').placeholder = dict.tripCityPlaceholder;
+      document.getElementById('tripAddBtn').innerText = dict.addBtn;
+      document.getElementById('tripGenBtn').innerText = dict.tripGenBtn;
+
+      document.getElementById('footerTitle').innerText = dict.footerTitle;
+      document.getElementById('footerSub').innerText = dict.footerSub;
+      document.getElementById('alertSeverity').innerText = dict.alertSeverity;
+      document.getElementById('alertDismissBtn').innerText = dict.alertDismiss;
+
+      if (currentWeatherData) renderWeatherData(currentWeatherData);
+    }
+
+    function toggleLang() {
+      applyLanguage(activeLang === 'en' ? 'hi' : 'en');
     }
 
     // Switch Tabs
@@ -326,13 +591,7 @@
       }
     }
 
-    function toggleLang() {
-      activeLang = activeLang === 'en' ? 'hi' : 'en';
-      document.getElementById('langToggleBtn').innerText = activeLang === 'en' ? 'हिन्दी' : 'English';
-      if (currentWeatherData) renderWeatherData(currentWeatherData);
-    }
-
-    // Geocoding Search
+    // Dynamic Geocoding Search
     async function searchAndLoadCity(query) {
       try {
         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en`);
@@ -345,10 +604,10 @@
       } catch (e) { console.error(e); }
     }
 
-    document.getElementById('searchBtn').onclick = () => {
+    function triggerSearch() {
       const q = document.getElementById('searchInput').value;
       if (q) searchAndLoadCity(q);
-    };
+    }
 
     document.getElementById('searchInput').oninput = async (e) => {
       const q = e.target.value;
@@ -373,9 +632,22 @@
       loadWeather(currentGeo);
     }
 
+    function startVoiceSearch() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { alert('Voice search not supported on this browser.'); return; }
+      const rec = new SpeechRecognition();
+      rec.lang = activeLang === 'hi' ? 'hi-IN' : 'en-US';
+      rec.start();
+      rec.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        document.getElementById('searchInput').value = text;
+        searchAndLoadCity(text);
+      };
+    }
+
     // Load Open-Meteo Weather
     async function loadWeather(geo) {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m,uv_index&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m,uv_index,is_day&hourly=temperature_2m,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&timezone=auto`;
       const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${geo.latitude}&longitude=${geo.longitude}&current=us_aqi,pm2_5,pm10`;
 
       try {
@@ -385,6 +657,18 @@
         ]);
 
         currentWeatherData = { raw: wRes, aqiRaw: aRes, geo };
+
+        // Set Dynamic Canvas Animation
+        const code = wRes.current.weather_code || 0;
+        const isDay = wRes.current.is_day ?? 1;
+
+        if (code >= 95) initParticles('thunderstorm');
+        else if (code >= 71) initParticles('snow');
+        else if (code >= 51) initParticles('rain');
+        else if (code === 45 || code === 48) initParticles('fog');
+        else if (code >= 2) initParticles('cloudy');
+        else initParticles(isDay ? 'clear-day' : 'clear-night');
+
         renderWeatherData(currentWeatherData);
       } catch (e) { console.error('Failed to fetch weather', e); }
     }
@@ -396,7 +680,7 @@
       const geo = data.geo;
 
       document.getElementById('heroCity').innerText = geo.name;
-      document.getElementById('heroCountry').innerText = geo.country || 'India';
+      document.getElementById('heroCountry').innerText = geo.country || (activeLang === 'hi' ? 'भारत' : 'India');
       document.getElementById('heroDate').innerText = new Date().toLocaleDateString(activeLang === 'hi' ? 'hi-IN' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 
       document.getElementById('heroTemp').innerText = `${Math.round(c.temperature_2m)}°C`;
@@ -410,73 +694,110 @@
       if (d.sunrise && d.sunrise[0]) document.getElementById('heroSunrise').innerText = new Date(d.sunrise[0]).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       if (d.sunset && d.sunset[0]) document.getElementById('heroSunset').innerText = new Date(d.sunset[0]).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-      renderCityChips();
+      // Render City Chips
+      document.getElementById('cityChips').innerHTML = POPULAR_CITIES.map(ch => 
+        `<button onclick="searchAndLoadCity('${ch}')" class="px-3 py-1 text-xs rounded-xl border ${ch.toLowerCase() === geo.name.toLowerCase() ? 'bg-blue-600/40 text-white border-blue-400 font-bold' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}">${ch}</button>`
+      ).join('');
 
       // AQI Calculation
-      const usAqi = data.aqiRaw?.current?.us_aqi || 45;
+      const usAqi = data.aqiRaw?.current?.us_aqi || 42;
       document.getElementById('aqiValue').innerText = `${usAqi} US AQI`;
-      document.getElementById('aqiAdvisory').innerText = usAqi <= 50 ? 'Air quality is satisfactory and poses little to no health risk.' : 'Air quality is acceptable; sensitive groups should take light precautions.';
+      if (activeLang === 'hi') {
+        document.getElementById('aqiBadge').innerText = usAqi <= 50 ? 'उत्तम (Good)' : 'मध्यम (Moderate)';
+        document.getElementById('aqiAdvisory').innerText = usAqi <= 50 ? 'वायु गुणवत्ता संतोषजनक है और स्वास्थ्य जोखिम नगण्य है।' : 'वायु गुणवत्ता स्वीकार्य है; संवेदनशील व्यक्तियों को सावधानी बरतनी चाहिए।';
+      } else {
+        document.getElementById('aqiBadge').innerText = usAqi <= 50 ? 'Good' : 'Moderate';
+        document.getElementById('aqiAdvisory').innerText = usAqi <= 50 ? 'Air quality is satisfactory and poses little to no health risk.' : 'Air quality is acceptable; sensitive groups should take light precautions.';
+      }
 
-      // Hourly Strip
-      const hourlyContainer = document.getElementById('hourlyStrip');
-      hourlyContainer.innerHTML = (h.time || []).slice(0, 24).map((t, idx) => {
-        const hourTime = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const temp = Math.round(h.temperature_2m[idx]);
+      // Hourly Forecast Strip
+      document.getElementById('hourlyStrip').innerHTML = (h.time || []).slice(0, 24).map((tStr, idx) => {
+        const hourTime = new Date(tStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const tempVal = Math.round(h.temperature_2m[idx]);
         const prob = h.precipitation_probability ? h.precipitation_probability[idx] : 0;
         return `<div class="flex-shrink-0 w-20 glass-card p-2 text-center text-xs">
           <div class="text-slate-400 font-medium">${hourTime}</div>
-          <div class="text-base my-1">⛅</div>
-          <div class="font-bold text-white">${temp}°C</div>
-          <div class="text-[10px] text-blue-300">${prob}% rain</div>
+          <div class="text-base my-1">${prob > 40 ? '🌧️' : '⛅'}</div>
+          <div class="font-bold text-white">${tempVal}°C</div>
+          <div class="text-[10px] text-blue-300">${prob}% ${activeLang==='hi'?'बारिश':'rain'}</div>
         </div>`;
       }).join('');
 
-      // Daily List
-      const dailyContainer = document.getElementById('dailyList');
-      dailyContainer.innerHTML = (d.time || []).slice(0, 7).map((t, idx) => {
-        const dayName = idx === 0 ? 'Today' : new Date(t).toLocaleDateString('en-US', { weekday: 'short' });
+      // Daily Forecast List
+      document.getElementById('dailyList').innerHTML = (d.time || []).slice(0, 7).map((tStr, idx) => {
+        const dayName = idx === 0 ? (activeLang === 'hi' ? 'आज' : 'Today') : new Date(tStr).toLocaleDateString(activeLang === 'hi' ? 'hi-IN' : 'en-US', { weekday: 'short' });
         const maxT = Math.round(d.temperature_2m_max[idx]);
         const minT = Math.round(d.temperature_2m_min[idx]);
         return `<div class="glass-card px-4 py-2.5 flex items-center justify-between text-xs">
           <span class="w-20 font-bold text-white">${dayName}</span>
-          <span class="text-slate-300">🌤️ Forecast</span>
+          <span class="text-slate-300">🌤️ ${activeLang==='hi'?'पूर्वाभास':'Forecast'}</span>
           <span class="font-bold text-white">${maxT}° / <span class="text-slate-400">${minT}°</span></span>
         </div>`;
       }).join('');
 
-      // Food & Clothing
-      const temp = c.temperature_2m;
-      if (c.precipitation > 2 || c.weather_code >= 51) {
-        document.getElementById('foodBox').innerHTML = '<strong>🍲 Hot Pakoras, Masala Chai & Vegetable Soup</strong><p class="mt-1 text-slate-400">Classic rain comfort foods!</p>';
-        document.getElementById('clothingBox').innerHTML = '<strong>☔ Waterproof Trench Coat, Umbrella & Gumboots</strong><p class="mt-1 text-slate-400">Essential protective rainwear.</p>';
-      } else if (temp > 30) {
-        document.getElementById('foodBox').innerHTML = '<strong>🍧 Chilled Lassi, Nimbu Pani & Watermelon Cubes</strong><p class="mt-1 text-slate-400">Cooling hydration for sunny days.</p>';
-        document.getElementById('clothingBox').innerHTML = '<strong>👕 Pure Cotton Apparel, Sunglasses & Sunscreen SPF50+</strong><p class="mt-1 text-slate-400">Breathable sun-protective attire.</p>';
+      // Weather Food & Clothing Recommendations
+      const tempVal = c.temperature_2m;
+      if (activeLang === 'hi') {
+        if (c.precipitation > 2 || c.weather_code >= 51) {
+          document.getElementById('foodBox').innerHTML = '<strong>🍲 गरम-गरम पकोड़े, अदरक वाली चाय एवं सूप</strong><p class="mt-1 text-slate-400">बारिश के मौसम के लिए सुहावने भारतीय व्यंजन!</p>';
+          document.getElementById('clothingBox').innerHTML = '<strong>☔ वाटरप्रूफ जैकेट, छाता एवं गमबूट्स</strong><p class="mt-1 text-slate-400">बारिश से सुरक्षा के लिए परिधान।</p>';
+        } else if (tempVal > 30) {
+          document.getElementById('foodBox').innerHTML = '<strong>🍧 ठंडी लस्सी, ताज़ा नींबू पानी एवं तरबूज</strong><p class="mt-1 text-slate-400">गर्मी और धूप से राहत देने वाले शीतल पेय।</p>';
+          document.getElementById('clothingBox').innerHTML = '<strong>👕 ढीले सूती कपड़े, धूप का चश्मा एवं सनस्क्रीन</strong><p class="mt-1 text-slate-400">हल्के एवं आरामदायक सूती वस्त्र।</p>';
+        } else {
+          document.getElementById('foodBox').innerHTML = '<strong>☕ गरमा-गरम कॉफ़ी, समोसे एवं ताज़े फल</strong><p class="mt-1 text-slate-400">सुहावने मौसम के लिए स्वादिष्ट अल्पाहार।</p>';
+          document.getElementById('clothingBox').innerHTML = '<strong>🧥 कैज़ुअल सूती शर्ट एवं हल्का स्कार्फ</strong><p class="mt-1 text-slate-400">आरामदायक परिधान।</p>';
+        }
       } else {
-        document.getElementById('foodBox').innerHTML = '<strong>☕ Filter Coffee, Fresh Salad & Samosas</strong><p class="mt-1 text-slate-400">Balanced delicious snacks.</p>';
-        document.getElementById('clothingBox').innerHTML = '<strong>🧥 Casual Cotton Top & Light Scarf</strong><p class="mt-1 text-slate-400">Versatile pleasant weather wear.</p>';
+        if (c.precipitation > 2 || c.weather_code >= 51) {
+          document.getElementById('foodBox').innerHTML = '<strong>🍲 Hot Crisp Pakoras, Ginger Masala Chai & Soup</strong><p class="mt-1 text-slate-400">Classic rain comfort foods!</p>';
+          document.getElementById('clothingBox').innerHTML = '<strong>☔ Waterproof Trench Coat, Umbrella & Gumboots</strong><p class="mt-1 text-slate-400">Essential protective rainwear.</p>';
+        } else if (tempVal > 30) {
+          document.getElementById('foodBox').innerHTML = '<strong>🍧 Chilled Lassi, Fresh Nimbu Pani & Watermelon Cubes</strong><p class="mt-1 text-slate-400">Cooling hydration for sunny days.</p>';
+          document.getElementById('clothingBox').innerHTML = '<strong>👕 Pure Cotton Apparel, Sunglasses & Sunscreen SPF50+</strong><p class="mt-1 text-slate-400">Breathable sun-protective attire.</p>';
+        } else {
+          document.getElementById('foodBox').innerHTML = '<strong>☕ Filter Coffee, Fresh Salad & Samosas</strong><p class="mt-1 text-slate-400">Balanced delicious snacks.</p>';
+          document.getElementById('clothingBox').innerHTML = '<strong>🧥 Casual Cotton Top & Light Scarf</strong><p class="mt-1 text-slate-400">Versatile pleasant weather wear.</p>';
+        }
       }
 
       // Farmer Advisory
-      document.getElementById('farmerGrid').innerHTML = `
-        <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-          <strong class="text-emerald-300 block mb-1">💧 Irrigation Advice</strong>
-          <p>${c.precipitation > 5 ? 'Postpone irrigation immediately due to rainfall.' : 'Apply light morning irrigation.'}</p>
-        </div>
-        <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-          <strong class="text-blue-300 block mb-1">🌾 Crop Management</strong>
-          <p>Ensure field drainage channels are clear of weeds.</p>
-        </div>
-        <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-          <strong class="text-purple-300 block mb-1">🛡️ Pest Risk</strong>
-          <p>Low pest risk under current atmospheric conditions.</p>
-        </div>
-      `;
+      if (activeLang === 'hi') {
+        document.getElementById('farmerGrid').innerHTML = `
+          <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+            <strong class="text-emerald-300 block mb-1">💧 सिंचाई सलाह</strong>
+            <p>${c.precipitation > 5 ? 'वर्षा के कारण सिंचाई तुरंत स्थगित करें।' : 'सुबह के समय हल्की सिंचाई करें।'}</p>
+          </div>
+          <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+            <strong class="text-blue-300 block mb-1">🌾 फसल प्रबंधन</strong>
+            <p>खेतों में जल निकासी की व्यवस्था सुनिश्चित करें।</p>
+          </div>
+          <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+            <strong class="text-purple-300 block mb-1">🛡️ कीट एवं रोग खतरा</strong>
+            <p>वर्तमान मौसम में कीट का खतरा सामान्य स्तर पर है।</p>
+          </div>
+        `;
+      } else {
+        document.getElementById('farmerGrid').innerHTML = `
+          <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+            <strong class="text-emerald-300 block mb-1">💧 Irrigation Advice</strong>
+            <p>${c.precipitation > 5 ? 'Postpone irrigation immediately due to rainfall.' : 'Apply light morning irrigation.'}</p>
+          </div>
+          <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+            <strong class="text-blue-300 block mb-1">🌾 Crop Management</strong>
+            <p>Ensure field drainage channels are clear of weeds.</p>
+          </div>
+          <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+            <strong class="text-purple-300 block mb-1">🛡️ Pest Risk</strong>
+            <p>Low pest risk under current atmospheric conditions.</p>
+          </div>
+        `;
+      }
 
-      // Severe Weather Check
-      if (c.weather_code >= 95 || c.precipitation > 15 || temp > 40) {
-        document.getElementById('alertHeadline').innerText = c.weather_code >= 95 ? 'Severe Thunderstorm Warning' : 'Extreme Weather Warning';
-        document.getElementById('alertDesc').innerText = `Active weather event detected in ${geo.name}. Stay indoors, unplug electronics, and avoid tall isolated trees.`;
+      // Severe Alert Check
+      if (c.weather_code >= 95 || c.precipitation > 15 || tempVal > 40) {
+        document.getElementById('alertHeadline').innerText = c.weather_code >= 95 ? (activeLang === 'hi' ? 'गंभीर तूफान चेतावनी' : 'Severe Thunderstorm Warning') : (activeLang === 'hi' ? 'अत्यधिक मौसम चेतावनी' : 'Extreme Weather Warning');
+        document.getElementById('alertDesc').innerText = activeLang === 'hi' ? `${geo.name} में गंभीर मौसम दर्ज किया गया है। सुरक्षित स्थान पर रहें और खिड़कियाँ बंद रखें।` : `Active weather event detected in ${geo.name}. Stay indoors, unplug electronics, and avoid tall isolated trees.`;
         document.getElementById('alertModal').classList.remove('hidden');
       }
     }
@@ -488,9 +809,12 @@
     function speakCurrentWeather() {
       if (!currentWeatherData) return;
       const c = currentWeatherData.raw.current;
-      const text = `In ${currentGeo.name}, temperature is ${Math.round(c.temperature_2m)} degrees Celsius. Humidity is ${c.relative_humidity_2m} percent.`;
+      const text = activeLang === 'hi'
+        ? `वर्तमान में ${currentGeo.name} में तापमान ${Math.round(c.temperature_2m)} डिग्री सेल्सियस है। आर्द्रता ${c.relative_humidity_2m} प्रतिशत है।`
+        : `In ${currentGeo.name}, temperature is ${Math.round(c.temperature_2m)} degrees Celsius. Humidity is ${c.relative_humidity_2m} percent.`;
       const synth = window.speechSynthesis;
       const u = new SpeechSynthesisUtterance(text);
+      u.lang = activeLang === 'hi' ? 'hi-IN' : 'en-US';
       synth.speak(u);
     }
 
@@ -501,15 +825,18 @@
       if (!text) return;
 
       const container = document.getElementById('chatMessages');
-      container.innerHTML += `<div class="bg-blue-600 text-white p-3 rounded-xl text-xs max-w-[85%] ml-auto">You: ${text}</div>`;
+      container.innerHTML += `<div class="bg-blue-600 text-white p-3 rounded-xl text-xs max-w-[85%] ml-auto">${text}</div>`;
       input.value = '';
 
-      // Check if multi-city comparison or single city query
       let reply = '';
-      if (text.toLowerCase().includes('compare')) {
-        reply = `Comparison Analysis: Currently, Gwalior is ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C with AQI 42, while Leh is 12°C with AQI 18. Gwalior is significantly warmer than Leh.`;
+      if (text.toLowerCase().includes('compare') || text.includes('तुलना')) {
+        reply = activeLang === 'hi'
+          ? `तुलना: वर्तमान में ग्वालियर में तापमान ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C और AQI 42 है, जबकि लेह में तापमान 12°C और AQI 18 है। ग्वालियर, लेह से अधिक गर्म है।`
+          : `Comparison Analysis: Currently, Gwalior is ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C with AQI 42, while Leh is 12°C with AQI 18. Gwalior is significantly warmer than Leh.`;
       } else {
-        reply = `In ${currentGeo.name}, current temperature is ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C with ${currentWeatherData.raw.current.relative_humidity_2m}% humidity. Satellite models forecast smooth weather over the next 24 hours.`;
+        reply = activeLang === 'hi'
+          ? `${currentGeo.name} में वर्तमान तापमान ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C है और आर्द्रता ${currentWeatherData.raw.current.relative_humidity_2m}% है। मौसम अनुकूल रहने का अनुमान है।`
+          : `In ${currentGeo.name}, current temperature is ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C with ${currentWeatherData.raw.current.relative_humidity_2m}% humidity. Satellite models forecast smooth weather over the next 24 hours.`;
       }
 
       setTimeout(() => {
@@ -544,9 +871,9 @@
       const container = document.getElementById('tripResults');
       container.innerHTML = tripCities.map(city => 
         `<div class="glass-panel p-4 space-y-2 text-xs">
-          <div class="font-bold text-white text-sm">📍 ${city} (5-Day Itinerary)</div>
-          <p class="text-slate-300">Expected Average Temp: 26°C / 18°C. Clear pleasant skies forecast.</p>
-          <div class="text-purple-300 font-semibold">Recommended Packing: Light cotton tops, comfortable walking sneakers, sunglasses & sunscreen SPF50+.</div>
+          <div class="font-bold text-white text-sm">📍 ${city} (${activeLang==='hi'?'5-दिवसीय यात्रा योजना':'5-Day Itinerary'})</div>
+          <p class="text-slate-300">${activeLang==='hi'?'औसत तापमान: 26°C / 18°C। सुहावना मौसम रहेगा।':'Expected Average Temp: 26°C / 18°C. Clear pleasant skies forecast.'}</p>
+          <div class="text-purple-300 font-semibold">${activeLang==='hi'?'अनुशंसित पैकिंग: सूती वस्त्र, आरामदायक जूते, धूप का चश्मा एवं सनस्क्रीन।':'Recommended Packing: Light cotton tops, comfortable walking sneakers, sunglasses & sunscreen SPF50+.'}</div>
         </div>`
       ).join('');
     }
