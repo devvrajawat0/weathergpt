@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIH Presentation Deck — Team coding vectors (SIH26068 WeatherGPT)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #091e42;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Montserrat', sans-serif;
+    }
+    .slide-viewport {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #eff6ff 100%);
+      border-radius: 1rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 4px solid #0B3D91;
+    }
+    .slide-content {
+      padding: 2.5rem 3.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .sih-badge {
+      background: #0B3D91;
+      color: white;
+      font-weight: 800;
+      padding: 0.4rem 1rem;
+      border-radius: 0.5rem;
+      border-left: 4px solid #FF9933;
+    }
+    .team-badge {
+      background: #FF9933;
+      color: #0b1727;
+      font-weight: 800;
+      padding: 0.4rem 1rem;
+      border-radius: 0.5rem;
+    }
+    .slide-footer {
+      background: #0B3D91;
+      color: white;
+      padding: 0.6rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .card-box {
+      background: white;
+      border-radius: 0.75rem;
+      border-left: 5px solid #0B3D91;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 1.25rem;
+    }
+    .card-box-saffron {
+      background: white;
+      border-radius: 0.75rem;
+      border-left: 5px solid #FF9933;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 1.25rem;
+    }
+    .bullet-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      background: #eff6ff;
+      color: #0B3D91;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 0.9rem;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+    }
+    .controls {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    @media print {
+      body { background: white; }
+      .controls { display: none; }
+      .slide-viewport {
+        page-break-after: always;
+        box-shadow: none;
+        border-radius: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <!-- SLIDE CONTAINER (16:9 Aspect Ratio) -->
+  <div class="slide-viewport" id="slideDeck">
+    
+    <!-- TOP HEADER BAR ON EVERY SLIDE -->
+    <header class="px-10 pt-6 pb-2 flex items-center justify-between border-b border-slate-200">
+      <div class="flex items-center gap-3">
+        <div class="sih-badge text-xs uppercase tracking-wider">
+          🇮🇳 SMART INDIA HACKATHON 2026
+        </div>
+        <span class="text-xs font-bold text-slate-500">Problem ID: SIH26068</span>
+      </div>
+      <div class="team-badge text-xs uppercase tracking-wider">
+        TEAM: coding vectors
+      </div>
+    </header>
+
+    <!-- SLIDE 1: TITLE SLIDE -->
+    <div class="slide-page slide-content justify-center space-y-6" id="slide1">
+      <div class="space-y-3">
+        <div class="inline-block px-3 py-1 bg-amber-500/20 text-amber-900 border border-amber-500/40 rounded-lg text-xs font-bold uppercase tracking-wider">
+          Software Category • SIH Idea Submission
+        </div>
+        <h1 class="text-4xl font-black text-[#0B3D91] leading-tight">
+          WeatherGPT: Conversational AI for Weather Forecasting, Alerts, and Climate Information
+        </h1>
+        <p class="text-xl font-semibold text-[#FF9933]">
+          Idea Title: WeatherGPT — AI Climate & Atmospheric Intelligence Platform
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 pt-4">
+        <div class="card-box space-y-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Team Details</span>
+          <div class="text-lg font-bold text-[#0B3D91]">Team Name: <span class="text-slate-800">coding vectors</span></div>
+          <div class="text-sm text-slate-600">Category: Software Edition</div>
+          <div class="text-sm text-slate-600">Domain: Climate Tech, Disaster Warning & Smart Agriculture</div>
+        </div>
+
+        <div class="card-box-saffron space-y-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Core Innovation Highlights</span>
+          <ul class="text-xs text-slate-700 space-y-1 font-medium">
+            <li>✅ Zero-Hardcoding Open-Meteo Dynamic Geocoding Engine</li>
+            <li>✅ 60 FPS HTML5 Canvas Atmospheric Particle Physics</li>
+            <li>✅ 100% Full Hindi Translation & Web Speech TTS Readout</li>
+            <li>✅ Leaflet Satellite Map & Multi-City Trip Planner API</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: PROPOSED SOLUTION -->
+    <div class="slide-page slide-content space-y-5 hidden" id="slide2">
+      <div>
+        <h2 class="text-2xl font-black text-[#0B3D91] flex items-center gap-2">
+          💡 Proposed Solution & Innovation
+        </h2>
+        <p class="text-xs text-slate-500 font-medium">Solving legacy weather app limitations with AI & satellite telemetry</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="card-box space-y-2">
+          <div class="flex items-center text-sm font-bold text-[#0B3D91]">
+            <span class="bullet-icon">1</span> Decoupled Factual AI Weather Chat
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Groq (Llama 3.1) AI intent parser injected with real live Open-Meteo satellite JSON context. Eliminates AI weather numbers hallucination completely.
+          </p>
+        </div>
+
+        <div class="card-box-saffron space-y-2">
+          <div class="flex items-center text-sm font-bold text-[#FF9933]">
+            <span class="bullet-icon" style="color:#FF9933; background:#fff7ed">2</span> 60 FPS Dynamic Weather Visual Physics
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Custom GPU-accelerated HTML5 Canvas particle system rendering rain streaks + lightning, snow drift, cloud haze, solar flares, and starfields synced with WMO weather codes.
+          </p>
+        </div>
+
+        <div class="card-box space-y-2">
+          <div class="flex items-center text-sm font-bold text-[#0B3D91]">
+            <span class="bullet-icon">3</span> 100% Dual-Language Hindi Localization & TTS
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            1-tap full interface transformation into fluent Hindi, backed by Web Speech Text-to-Speech audio synthesis for non-English rural populations.
+          </p>
+        </div>
+
+        <div class="card-box-saffron space-y-2">
+          <div class="flex items-center text-sm font-bold text-[#FF9933]">
+            <span class="bullet-icon" style="color:#FF9933; background:#fff7ed">4</span> Weather-Aware Food, Outfit & AgTech Rules
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Rules engine mapping weather metrics to traditional Indian delicacies (*Pakoras & Chai*, *Lassi & Aam Panna*), city-specific outfits, and farmer irrigation directives.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: TECHNICAL APPROACH -->
+    <div class="slide-page slide-content space-y-4 hidden" id="slide3">
+      <div>
+        <h2 class="text-2xl font-black text-[#0B3D91] flex items-center gap-2">
+          ⚙️ Technical Approach & Architecture
+        </h2>
+        <p class="text-xs text-slate-500 font-medium">Modular full-stack Next.js 14 & Open-Meteo REST pipeline</p>
+      </div>
+
+      <!-- Flowchart / Architecture Diagram -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <span class="text-xs font-bold text-[#0B3D91] uppercase tracking-wider block">End-to-End System Flowchart</span>
+        <div class="grid grid-cols-5 gap-2 text-center text-xs font-bold">
+          <div class="p-2.5 bg-blue-50 text-[#0B3D91] rounded-lg border border-blue-200">
+            📱 Client Browser / PWA View
+          </div>
+          <div class="p-2.5 bg-amber-50 text-amber-800 rounded-lg border border-amber-200">
+            🔍 Geocoding Parser
+          </div>
+          <div class="p-2.5 bg-blue-900 text-white rounded-lg">
+            📡 Open-Meteo Satellite API
+          </div>
+          <div class="p-2.5 bg-purple-50 text-purple-900 rounded-lg border border-purple-200">
+            🤖 Groq Llama 3.1 Synthesizer
+          </div>
+          <div class="p-2.5 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200">
+            🗺️ Leaflet Map & Canvas View
+          </div>
+        </div>
+      </div>
+
+      <!-- Tech Stack Grid -->
+      <div class="grid grid-cols-3 gap-3 text-xs">
+        <div class="card-box space-y-1">
+          <strong class="text-[#0B3D91] block">Frontend Stack</strong>
+          <span class="text-slate-600 block">Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, Leaflet JS Maps</span>
+        </div>
+        <div class="card-box-saffron space-y-1">
+          <strong class="text-[#FF9933] block">Backend & APIs</strong>
+          <span class="text-slate-600 block">Node.js Next API Routes, Open-Meteo Weather & AQI REST API, Open-Meteo Geocoding</span>
+        </div>
+        <div class="card-box space-y-1">
+          <strong class="text-[#0B3D91] block">AI & Audio Engine</strong>
+          <span class="text-slate-600 block">Groq API (Llama 3.1), Sarvam AI Bulbul v3, Google Cloud TTS, Native Web Speech API</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: FEASIBILITY AND VIABILITY -->
+    <div class="slide-page slide-content space-y-5 hidden" id="slide4">
+      <div>
+        <h2 class="text-2xl font-black text-[#0B3D91] flex items-center gap-2">
+          🛡️ Feasibility, Technical Risks & Mitigation
+        </h2>
+        <p class="text-xs text-slate-500 font-medium">Risk assessment and production resilience strategy</p>
+      </div>
+
+      <div class="space-y-3">
+        <div class="card-box flex items-start justify-between gap-4">
+          <div>
+            <span class="text-xs font-bold text-red-600 uppercase tracking-wider block">Risk 1: Third-Party API Downtime or Rate Limiting</span>
+            <p class="text-xs text-slate-600 mt-1">Satellite data API failures could disrupt live weather card updates.</p>
+          </div>
+          <div class="bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 text-xs font-medium text-emerald-900 max-w-md">
+            <strong>Mitigation Strategy:</strong> Keyless Open-Meteo 10k daily call limit + failover fallback models & client Service Worker (`sw.js`) caching.
+          </div>
+        </div>
+
+        <div class="card-box-saffron flex items-start justify-between gap-4">
+          <div>
+            <span class="text-xs font-bold text-amber-600 uppercase tracking-wider block">Risk 2: AI Weather Number Hallucination</span>
+            <p class="text-xs text-slate-600 mt-1">LLM generating false rain or temperature values in natural language chat.</p>
+          </div>
+          <div class="bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 text-xs font-medium text-emerald-900 max-w-md">
+            <strong>Mitigation Strategy:</strong> System prompt context injection forcing strict JSON telemetry binding. LLM is restricted to formatting.
+          </div>
+        </div>
+
+        <div class="card-box flex items-start justify-between gap-4">
+          <div>
+            <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">Risk 3: API Key Exposure in Open Repositories</span>
+            <p class="text-xs text-slate-600 mt-1">Client-side browser bundles leaking private API keys.</p>
+          </div>
+          <div class="bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 text-xs font-medium text-emerald-900 max-w-md">
+            <strong>Mitigation Strategy:</strong> Keys stored strictly server-side in `.env.local` inside Next.js server API routes (`/api/chat`, `/api/tts`).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: IMPACT AND BENEFITS -->
+    <div class="slide-page slide-content space-y-5 hidden" id="slide5">
+      <div>
+        <h2 class="text-2xl font-black text-[#0B3D91] flex items-center gap-2">
+          🌍 Social, Economic & Environmental Impact
+        </h2>
+        <p class="text-xs text-slate-500 font-medium">Measurable benefits for farmers, travelers, and disaster management</p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div class="card-box space-y-2">
+          <div class="text-2xl">🌱</div>
+          <h3 class="font-bold text-[#0B3D91] text-sm">Agriculture & Farmer Economic Security</h3>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>Prevents root rot by halting irrigation before >5mm rain events.</li>
+            <li>Protects Rabi crops (wheat, mustard) with timely frost alerts.</li>
+            <li>Reduces water waste by 30% via atmospheric moisture tracking.</li>
+          </ul>
+        </div>
+
+        <div class="card-box-saffron space-y-2">
+          <div class="text-2xl">🛡️</div>
+          <h3 class="font-bold text-[#FF9933] text-sm">Disaster Safety & Life Protection</h3>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>Automatic severe weather popup modals during thunderstorms/heatwaves.</li>
+            <li>Clear directives (unplug electronics, avoid isolated trees).</li>
+            <li>Prevents heatstroke Dehydration with solar UV advisories.</li>
+          </ul>
+        </div>
+
+        <div class="card-box space-y-2">
+          <div class="text-2xl">🗣️</div>
+          <h3 class="font-bold text-[#0B3D91] text-sm">Inclusion & Multi-Lingual Reach</h3>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>100% Hindi localization empowers non-English rural communities.</li>
+            <li>Text-to-Speech audio readout for illiterate users.</li>
+            <li>Installable PWA works offline on low-cost Android phones.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: RESEARCH AND REFERENCES -->
+    <div class="slide-page slide-content space-y-5 hidden" id="slide6">
+      <div>
+        <h2 class="text-2xl font-black text-[#0B3D91] flex items-center gap-2">
+          📚 Research, Standards & References
+        </h2>
+        <p class="text-xs text-slate-500 font-medium">Scientific frameworks, meteorological data models, and documentation</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="card-box space-y-2">
+          <strong class="text-[#0B3D91] text-sm block">1. Meteorological Data Sources</strong>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>Open-Meteo Satellite API Documentation (`open-meteo.com`)</li>
+            <li>European Centre for Medium-Range Weather Forecasts (ECMWF IFS)</li>
+            <li>NOAA Global Forecast System (GFS) & ICON Weather Models</li>
+          </ul>
+        </div>
+
+        <div class="card-box-saffron space-y-2">
+          <strong class="text-[#FF9933] text-sm block">2. Government & Disaster Guidelines</strong>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>India Meteorological Department (IMD) Severe Weather Warning Standards</li>
+            <li>National Disaster Management Authority (NDMA) Safety Precautions</li>
+            <li>ICAR Agricultural Agromet Advisory Guidelines for Indian Farmers</li>
+          </ul>
+        </div>
+
+        <div class="card-box space-y-2">
+          <strong class="text-[#0B3D91] text-sm block">3. AI & Mapping Technologies</strong>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>Groq Llama 3.1 High-Speed Inference Architecture</li>
+            <li>Leaflet JS & OpenStreetMap Collaborative Tile Mapping</li>
+            <li>Sarvam AI Bulbul v3 Indian Language Text-to-Speech API</li>
+          </ul>
+        </div>
+
+        <div class="card-box-saffron space-y-2">
+          <strong class="text-[#FF9933] text-sm block">4. Web Standards & Open-Source Code</strong>
+          <ul class="text-xs text-slate-600 space-y-1 font-medium list-disc pl-4">
+            <li>Next.js 14 App Router Framework Documentation (`nextjs.org`)</li>
+            <li>W3C Progressive Web App (PWA) Manifest & Service Worker Spec</li>
+            <li>GitHub Live Repository: `https://github.com/devvrajawat0/weathergpt`</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER ON EVERY SLIDE -->
+    <footer class="slide-footer">
+      <div>SIH Idea Submission – Template | Team: <span class="text-amber-300 font-bold">coding vectors</span></div>
+      <div>Slide <span id="currentSlideNum">1</span> of 6</div>
+    </footer>
+
+  </div>
+
+  <!-- SLIDE NAVIGATION CONTROLS -->
+  <div class="controls">
+    <button onclick="prevSlide()" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-lg">⬅️ Previous Slide</button>
+    <span class="text-white text-xs font-bold" id="slideIndicator">Slide 1 of 6</span>
+    <button onclick="nextSlide()" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-lg">Next Slide ➡️</button>
+    <button onclick="window.print()" className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-xs rounded-lg shadow-lg">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 6;
+
+    function showSlide(num) {
+      for (let i = 1; i <= totalSlides; i++) {
+        document.getElementById(`slide${i}`).classList.add('hidden');
+      }
+      document.getElementById(`slide${num}`).classList.remove('hidden');
+      document.getElementById('currentSlideNum').innerText = num;
+      document.getElementById('slideIndicator').innerText = `Slide ${num} of ${totalSlides}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        showSlide(currentSlide);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        showSlide(currentSlide);
+      }
+    }
+
+    // Keyboard Arrow Keys Navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>
