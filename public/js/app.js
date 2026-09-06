@@ -1,0 +1,752 @@
+/**
+ * WeatherGPT Core Application Controller (SIH26068)
+ * Manages App State, Screen Routing (6 Screens), Open-Meteo Live API,
+ * City Geocoding, Forecast Charts, and Device Live Location.
+ */
+
+const UI_TRANSLATIONS = {
+  hinglish: {
+    nav_dashboard: "Dashboard",
+    nav_chat: "AI Chat",
+    nav_forecast: "Forecast",
+    nav_alerts: "Alerts",
+    nav_climate: "Climate & AQI",
+    nav_settings: "Settings",
+    btn_my_location: "Gwalior"
+  },
+  hindi: {
+    nav_dashboard: "डैशबोर्ड",
+    nav_chat: "एआई चैट",
+    nav_forecast: "पूर्वानुमान",
+    nav_alerts: "अलर्ट",
+    nav_climate: "जलवायु एवं AQI",
+    nav_settings: "सेटिंग्स",
+    btn_my_location: "ग्वालियर"
+  },
+  gujarati: {
+    nav_dashboard: "ડેશબોર્ડ",
+    nav_chat: "એઆઈ ચેટ",
+    nav_forecast: "આગાહી",
+    nav_alerts: "અલર્ટ્સ",
+    nav_climate: "હવામાન અને AQI",
+    nav_settings: "સેટિંગ્સ",
+    btn_my_location: "ગ્વાલિયર"
+  },
+  marathi: {
+    nav_dashboard: "डॅशबोर्ड",
+    nav_chat: "एआय चॅट",
+    nav_forecast: "हवामान अंदाज",
+    nav_alerts: "अलर्ट्स",
+    nav_climate: "हवामान आणि AQI",
+    nav_settings: "सेटिंग्ज",
+    btn_my_location: "ग्वाल्हेर"
+  },
+  english: {
+    nav_dashboard: "Dashboard",
+    nav_chat: "AI Chat",
+    nav_forecast: "Forecast",
+    nav_alerts: "Alerts",
+    nav_climate: "Climate & AQI",
+    nav_settings: "Settings",
+    btn_my_location: "Gwalior"
+  },
+  bengali: {
+    nav_dashboard: "ড্যাশবোর্ড",
+    nav_chat: "এআই চ্যাট",
+    nav_forecast: "পূর্বাভাস",
+    nav_alerts: "সতর্কবার্তা",
+    nav_climate: "জলবায়ু ও AQI",
+    nav_settings: "সেটিংস",
+    btn_my_location: "গোয়ালিয়র"
+  },
+  tamil: {
+    nav_dashboard: "டாஷ்போர்டு",
+    nav_chat: "AI அரட்டை",
+    nav_forecast: "வானிலை கணிப்பு",
+    nav_alerts: "எச்சரிக்கைகள்",
+    nav_climate: "காலநிலை & AQI",
+    nav_settings: "அமைப்புகள்",
+    btn_my_location: "குவாலியர்"
+  },
+  telugu: {
+    nav_dashboard: "డాష్‌బోర్డ్",
+    nav_chat: "AI చాట్",
+    nav_forecast: "వాతావరణ అంచనా",
+    nav_alerts: "హెచ్చరికలు",
+    nav_climate: "వాతావరణం & AQI",
+    nav_settings: "సెట్టింగ్‌లు",
+    btn_my_location: "గ్వాలియర్"
+  }
+};
+
+class WeatherGPTApp {
+  constructor() {
+    this.currentScreen = 'dashboard';
+    this.location = {
+      name: 'Gwalior, Madhya Pradesh',
+      lat: 26.2183,
+      lon: 78.1772,
+      country: 'India'
+    };
+    this.unit = 'celsius'; // 'celsius' or 'fahrenheit'
+    this.language = 'hinglish';
+    this.weatherData = null;
+    this.aqiData = null;
+    this.chartInstance = null;
+    this.countdownTimerId = null;
+
+    this.init();
+  }
+
+  async init() {
+    this.setupScreenRouting();
+    this.setupLocationSearch();
+    this.setupSettingsHandlers();
+    this.setupLocationPermissionModal();
+    this.initCountdownTimer();
+    
+    const geoBtn = document.getElementById('current-geo-btn');
+    if (geoBtn) {
+      geoBtn.addEventListener('click', () => this.useCurrentGeolocation());
+    }
+
+    // Load initial weather for Gwalior immediately on startup
+    this.fetchWeatherData(26.2183, 78.1772, 'Gwalior, Madhya Pradesh');
+
+    // Automatically check device location permission on startup
+    this.useCurrentGeolocation();
+
+    // Initial lucide icons rendering
+    if (window.lucide) lucide.createIcons();
+  }
+
+  setupScreenRouting() {
+    const navLinks = document.querySelectorAll('[data-screen]');
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetScreen = link.getAttribute('data-screen');
+        this.switchScreen(targetScreen);
+      });
+    });
+  }
+
+  switchScreen(screenName) {
+    this.currentScreen = screenName;
+
+    document.querySelectorAll('.screen-view').forEach(screen => {
+      screen.classList.add('hidden');
+    });
+
+    const activeScreen = document.getElementById(`screen-${screenName}`);
+    if (activeScreen) {
+      activeScreen.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('[data-screen]').forEach(link => {
+      const isTarget = link.getAttribute('data-screen') === screenName;
+      link.classList.toggle('active', isTarget);
+      link.classList.toggle('text-sky-400', isTarget);
+      link.classList.toggle('text-slate-400', !isTarget);
+    });
+
+    if (screenName === 'forecast') {
+      this.renderForecastChart();
+    }
+
+    if (window.lucide) lucide.createIcons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  setupLocationSearch() {
+    const searchInputs = [document.getElementById('location-search-input'), document.getElementById('dash-search-input')];
+    
+    searchInputs.forEach(input => {
+      if (!input) return;
+      
+      let debounceTimer = null;
+      input.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(debounceTimer);
+        
+        if (query.length < 2) {
+          this.hideSearchResults();
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          await this.searchLocations(query, input);
+        }, 300);
+      });
+    });
+
+    const geoBtn = document.getElementById('current-geo-btn');
+    if (geoBtn) {
+      geoBtn.addEventListener('click', () => this.useCurrentGeolocation());
+    }
+  }
+
+  async searchLocations(query, inputElement) {
+    try {
+      let data;
+      try {
+        const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}`);
+        if (response.ok) data = await response.json();
+        else throw new Error('Fallback to direct geocoding');
+      } catch (e) {
+        const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`);
+        data = await response.json();
+      }
+      
+      if (data.results && data.results.length > 0) {
+        const indianOnly = data.results.filter(place => place.country === 'India');
+        if (indianOnly.length > 0) {
+          this.renderSearchResults(indianOnly, inputElement);
+        } else {
+          this.hideSearchResults();
+        }
+      } else {
+        this.hideSearchResults();
+      }
+    } catch (err) {
+      console.error('Geocoding Search Error:', err);
+    }
+  }
+
+  renderSearchResults(results, inputElement) {
+    let dropdown = document.getElementById('search-dropdown-results');
+    if (!dropdown) {
+      dropdown = document.createElement('div');
+      dropdown.id = 'search-dropdown-results';
+      dropdown.className = 'absolute left-0 right-0 top-full mt-2 bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-2xl backdrop-blur-xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-800';
+      inputElement.parentElement.appendChild(dropdown);
+    }
+
+    dropdown.innerHTML = '';
+    results.slice(0, 7).forEach(place => {
+      const name = `${place.name}${place.admin1 ? ', ' + place.admin1 : ''}, India`;
+      const item = document.createElement('div');
+      item.className = 'px-4 py-3 hover:bg-slate-800/80 cursor-pointer flex items-center justify-between transition-colors';
+      item.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="map-pin" class="w-4 h-4 text-sky-400"></i>
+          <div>
+            <div class="font-medium text-slate-100 text-sm">${place.name}</div>
+            <div class="text-xs text-slate-400">${place.admin1 || ''} India</div>
+          </div>
+        </div>
+        <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+          India City
+        </span>
+      `;
+
+      item.addEventListener('click', () => {
+        this.location = {
+          name: name,
+          lat: place.latitude,
+          lon: place.longitude,
+          country: place.country
+        };
+        inputElement.value = place.name;
+        this.hideSearchResults();
+        this.fetchWeatherData(place.latitude, place.longitude, name);
+      });
+
+      dropdown.appendChild(item);
+    });
+
+    dropdown.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  hideSearchResults() {
+    const dropdown = document.getElementById('search-dropdown-results');
+    if (dropdown) dropdown.classList.add('hidden');
+  }
+
+  setupLocationPermissionModal() {
+    const modal = document.getElementById('location-permission-modal');
+    const allowBtn = document.getElementById('modal-allow-location-btn');
+    const searchBtn = document.getElementById('modal-search-city-btn');
+    const defaultBtn = document.getElementById('modal-use-default-btn');
+
+    if (allowBtn) {
+      allowBtn.addEventListener('click', () => {
+        if (modal) modal.classList.add('hidden');
+        this.requestGeolocationPermission(true);
+      });
+    }
+
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
+        if (modal) modal.classList.add('hidden');
+        const searchInput = document.getElementById('location-search-input');
+        if (searchInput) {
+          searchInput.scrollIntoView({ behavior: 'smooth' });
+          searchInput.focus();
+        }
+      });
+    }
+
+    if (defaultBtn) {
+      defaultBtn.addEventListener('click', () => {
+        if (modal) modal.classList.add('hidden');
+        this.location = { name: 'Gwalior, Madhya Pradesh', lat: 26.2183, lon: 78.1772, country: 'India' };
+        this.fetchWeatherData(26.2183, 78.1772, 'Gwalior, Madhya Pradesh');
+      });
+    }
+  }
+
+  showLocationPermissionModal() {
+    this.showGlobalLoader(false);
+    const modal = document.getElementById('location-permission-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+
+  useCurrentGeolocation() {
+    this.requestGeolocationPermission(false);
+  }
+
+  requestGeolocationPermission(userInitiated = false) {
+    if (!navigator.geolocation) {
+      this.showLocationPermissionModal();
+      return;
+    }
+
+    this.showGlobalLoader(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const modal = document.getElementById('location-permission-modal');
+        if (modal) modal.classList.add('hidden');
+
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        try {
+          const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+          const data = await res.json();
+          let name = 'Gwalior, Madhya Pradesh';
+          if (data.city || data.locality) {
+            name = `${data.city || data.locality}${data.principalSubdivision ? ', ' + data.principalSubdivision : ''}, India`;
+          }
+          this.location = { name, lat, lon, country: 'India' };
+          await this.fetchWeatherData(lat, lon, name);
+        } catch(e) {
+          const name = 'Gwalior, Madhya Pradesh';
+          this.location = { name, lat, lon, country: 'India' };
+          await this.fetchWeatherData(lat, lon, name);
+        }
+      },
+      (err) => {
+        console.warn('Geolocation permission not given:', err.message);
+        this.showLocationPermissionModal();
+      },
+      { timeout: 8000 }
+    );
+  }
+
+  async fetchWeatherData(lat, lon, locationName) {
+    try {
+      this.showGlobalLoader(true);
+
+      try {
+        const [weatherRes, aqiRes] = await Promise.all([
+          fetch(`/api/weather?lat=${lat}&lon=${lon}`),
+          fetch(`/api/aqi?lat=${lat}&lon=${lon}`)
+        ]);
+
+        if (weatherRes.ok && aqiRes.ok) {
+          this.weatherData = await weatherRes.json();
+          this.aqiData = await aqiRes.json();
+        } else {
+          throw new Error('Fallback to direct Open-Meteo');
+        }
+      } catch (backendErr) {
+        const [weatherRes, aqiRes] = await Promise.all([
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,weathercode,windspeed_10m,surface_pressure&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max&timezone=auto`),
+          fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,ozone&timezone=auto`)
+        ]);
+        this.weatherData = await weatherRes.json();
+        this.aqiData = await aqiRes.json();
+      }
+
+      this.showGlobalLoader(false);
+
+      this.updateDashboardUI(locationName);
+      this.updateForecastUI();
+      this.updateAlertsUI();
+      this.updateClimateUI();
+      this.updateDynamicAnimationMode();
+
+    } catch (err) {
+      console.error('Error fetching weather data:', err);
+      this.showGlobalLoader(false);
+    }
+  }
+
+  updateDashboardUI(locationName) {
+    if (!this.weatherData || !this.weatherData.current_weather) return;
+
+    const cur = this.weatherData.current_weather;
+    const tempC = Math.round(cur.temperature);
+    const tempDisplay = this.unit === 'celsius' ? `${tempC}°C` : `${Math.round(tempC * 9/5 + 32)}°F`;
+    const rainProb = this.weatherData.hourly && this.weatherData.hourly.precipitation_probability ? this.weatherData.hourly.precipitation_probability[0] || 15 : 15;
+    const humidity = this.weatherData.hourly && this.weatherData.hourly.relativehumidity_2m ? this.weatherData.hourly.relativehumidity_2m[0] || 60 : 60;
+    const windSpeed = Math.round(cur.windspeed || 12);
+    const wCode = cur.weathercode || 0;
+
+    const locElem = document.getElementById('dash-location-name');
+    const tempElem = document.getElementById('dash-temp-main');
+    const conditionElem = document.getElementById('dash-condition-text');
+    const humidityElem = document.getElementById('dash-humidity');
+    const windElem = document.getElementById('dash-wind');
+    const rainProbElem = document.getElementById('dash-rain-prob');
+    const umbrellaBadge = document.getElementById('dash-umbrella-badge');
+
+    if (locElem) locElem.innerText = locationName;
+    if (tempElem) tempElem.innerText = tempDisplay;
+    if (humidityElem) humidityElem.innerText = `${humidity}%`;
+    if (windElem) windElem.innerText = `${windSpeed} km/h`;
+    if (rainProbElem) rainProbElem.innerText = `${rainProb}%`;
+
+    const condMeta = this.getWeatherConditionMeta(wCode, rainProb);
+    if (conditionElem) conditionElem.innerText = condMeta.text;
+
+    if (umbrellaBadge) {
+      const needUmbrella = rainProb > 40 || condMeta.mode === 'rain' || condMeta.mode === 'thunder';
+      umbrellaBadge.className = `p-4 rounded-2xl border flex items-center gap-3 transition-all ${needUmbrella ? 'bg-amber-500/20 border-amber-500/40 text-amber-200' : 'bg-sky-500/20 border-sky-500/40 text-sky-200'}`;
+      umbrellaBadge.innerHTML = `
+        <div class="p-2.5 rounded-xl ${needUmbrella ? 'bg-amber-500/30' : 'bg-sky-500/30'}">
+          <i data-lucide="${needUmbrella ? 'umbrella' : 'sun'}" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-300">WeatherGPT Advisory</div>
+          <div class="font-bold text-sm md:text-base">${needUmbrella ? '☔ Chhata Saath Rakhein! (Rain Expected)' : '☀️ Safe Outdoor Day (No Umbrella Needed)'}</div>
+        </div>
+      `;
+    }
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  updateForecastUI() {
+    if (!this.weatherData || !this.weatherData.daily) return;
+
+    const hourlyContainer = document.getElementById('hourly-cards-container');
+    if (hourlyContainer && this.weatherData.hourly) {
+      hourlyContainer.innerHTML = '';
+      const times = this.weatherData.hourly.time.slice(0, 24);
+      const temps = this.weatherData.hourly.temperature_2m.slice(0, 24);
+      const probs = this.weatherData.hourly.precipitation_probability.slice(0, 24);
+      const codes = this.weatherData.hourly.weathercode.slice(0, 24);
+
+      times.forEach((t, i) => {
+        const timeStr = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const meta = this.getWeatherConditionMeta(codes[i], probs[i]);
+        const card = document.createElement('div');
+        card.className = 'glass-card p-3 rounded-2xl min-w-[100px] text-center flex flex-col items-center justify-between shrink-0 border border-slate-700/60 hover:scale-105 transition-transform';
+        card.innerHTML = `
+          <div class="text-xs text-slate-400 font-medium">${timeStr}</div>
+          <i data-lucide="${meta.icon}" class="${meta.color} w-6 h-6 my-2"></i>
+          <div class="font-bold text-sm text-slate-100">${Math.round(temps[i])}°C</div>
+          <div class="text-[11px] text-sky-400 flex items-center gap-0.5 mt-1">
+            <i data-lucide="droplets" class="w-3 h-3"></i> ${probs[i]}%
+          </div>
+        `;
+        hourlyContainer.appendChild(card);
+      });
+    }
+
+    const dailyContainer = document.getElementById('daily-cards-container');
+    if (dailyContainer) {
+      dailyContainer.innerHTML = '';
+      const daily = this.weatherData.daily;
+      daily.time.forEach((dayStr, i) => {
+        const dateObj = new Date(dayStr);
+        const dayName = i === 0 ? 'Today' : dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const maxT = Math.round(daily.temperature_2m_max[i]);
+        const minT = Math.round(daily.temperature_2m_min[i]);
+        const rainP = daily.precipitation_probability_max ? daily.precipitation_probability_max[i] : 20;
+        const meta = this.getWeatherConditionMeta(daily.weathercode[i], rainP);
+
+        const row = document.createElement('div');
+        row.className = 'glass-card p-4 rounded-2xl flex items-center justify-between hover:border-sky-500/50 transition-all';
+        row.innerHTML = `
+          <div class="flex items-center gap-3 w-1/3">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700">
+              <i data-lucide="${meta.icon}" class="${meta.color} w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="font-bold text-sm text-slate-100">${dayName}</div>
+              <div class="text-xs text-slate-400">${dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2 text-xs text-sky-400 font-semibold w-1/4 justify-center">
+            <i data-lucide="cloud-rain" class="w-4 h-4"></i> ${rainP}% Rain
+          </div>
+
+          <div class="flex items-center gap-3 w-1/3 justify-end text-sm">
+            <span class="font-bold text-slate-100">${maxT}°</span>
+            <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden hidden md:block">
+              <div class="h-full bg-gradient-to-r from-sky-400 to-amber-400" style="width: ${Math.min(100, (maxT / 45) * 100)}%"></div>
+            </div>
+            <span class="text-slate-400 font-medium">${minT}°</span>
+          </div>
+        `;
+        dailyContainer.appendChild(row);
+      });
+    }
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  renderForecastChart() {
+    const ctx = document.getElementById('forecast-chart');
+    if (!ctx || !this.weatherData || !this.weatherData.hourly) return;
+
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
+    }
+
+    const labels = this.weatherData.hourly.time.slice(0, 12).map(t => new Date(t).toLocaleTimeString([], { hour: '2-digit' }));
+    const temps = this.weatherData.hourly.temperature_2m.slice(0, 12);
+    const rains = this.weatherData.hourly.precipitation_probability.slice(0, 12);
+
+    if (window.Chart) {
+      this.chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Temperature (°C)',
+              data: temps,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 3
+            },
+            {
+              label: 'Rain Probability (%)',
+              data: rains,
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#cbd5e1' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
+        }
+      });
+    }
+  }
+
+  updateAlertsUI() {
+    const alertsContainer = document.getElementById('weather-alerts-list');
+    if (!alertsContainer || !this.weatherData) return;
+
+    alertsContainer.innerHTML = '';
+    const cur = this.weatherData.current_weather || {};
+    const rainProb = this.weatherData.hourly ? this.weatherData.hourly.precipitation_probability[0] || 0 : 0;
+    const temp = cur.temperature || 25;
+    const wCode = cur.weathercode || 0;
+
+    const alertList = [];
+
+    if ([95, 96, 99].includes(wCode)) {
+      alertList.push({ title: '⚡ Severe Thunderstorm & Lightning Alert', severity: 'High', desc: 'Heavy lightning activity and gusty winds reported. Stay indoors away from metal structures.', color: 'border-purple-500/60 bg-purple-950/40 text-purple-200' });
+    }
+    if (rainProb > 60) {
+      alertList.push({ title: '🌧️ Heavy Rain & Waterlogging Advisory', severity: 'Moderate', desc: 'High rainfall chance. Drive carefully and keep umbrella/rainwear ready.', color: 'border-sky-500/60 bg-sky-950/40 text-sky-200' });
+    }
+    if (temp > 38) {
+      alertList.push({ title: '🔥 Extreme Heatwave Warning', severity: 'Severe', desc: 'High daytime temperatures. Stay hydrated and avoid direct sun exposure.', color: 'border-rose-500/60 bg-rose-950/40 text-rose-200' });
+    }
+
+    if (alertList.length === 0) {
+      alertList.push({ title: '✅ Normal Weather Condition', severity: 'Low', desc: 'No active severe weather warnings for this location. Safe for outdoor activities.', color: 'border-emerald-500/60 bg-emerald-950/40 text-emerald-200' });
+    }
+
+    alertList.forEach(alertItem => {
+      const card = document.createElement('div');
+      card.className = `p-5 rounded-2xl border ${alertItem.color} shadow-xl backdrop-blur-xl flex flex-col md:flex-row gap-4 items-start md:items-center justify-between`;
+      card.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 border border-white/20">${alertItem.severity} Severity</span>
+            <span class="text-xs text-slate-300 font-medium">• ${this.location.name}</span>
+          </div>
+          <h4 class="text-base font-bold text-white">${alertItem.title}</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">${alertItem.desc}</p>
+        </div>
+        <button class="px-4 py-2 bg-white/10 hover:bg-white/20 text-xs font-semibold rounded-xl border border-white/20 transition-all shrink-0">
+          View Protocol
+        </button>
+      `;
+      alertsContainer.appendChild(card);
+    });
+  }
+
+  updateClimateUI() {
+    if (!this.aqiData || !this.aqiData.current) return;
+
+    const cur = this.aqiData.current;
+    const aqi = Math.round(cur.us_aqi || 48);
+    const pm25 = Math.round(cur.pm2_5 || 18);
+    const pm10 = Math.round(cur.pm10 || 35);
+    const co = Math.round(cur.carbon_monoxide || 240);
+    const no2 = Math.round(cur.nitrogen_dioxide || 14);
+
+    const aqiValElem = document.getElementById('aqi-value-main');
+    const aqiStatusElem = document.getElementById('aqi-status-text');
+    const pm25Elem = document.getElementById('aqi-pm25');
+    const pm10Elem = document.getElementById('aqi-pm10');
+    const coElem = document.getElementById('aqi-co');
+    const no2Elem = document.getElementById('aqi-no2');
+
+    if (aqiValElem) aqiValElem.innerText = aqi;
+    if (pm25Elem) pm25Elem.innerText = `${pm25} µg/m³`;
+    if (pm10Elem) pm10Elem.innerText = `${pm10} µg/m³`;
+    if (coElem) coElem.innerText = `${co} µg/m³`;
+    if (no2Elem) no2Elem.innerText = `${no2} µg/m³`;
+
+    let status = 'Good 😊';
+    let statusClass = 'text-emerald-400 bg-emerald-500/20 border-emerald-500/40';
+
+    if (aqi > 50 && aqi <= 100) {
+      status = 'Moderate 😐';
+      statusClass = 'text-yellow-400 bg-yellow-500/20 border-yellow-500/40';
+    } else if (aqi > 100 && aqi <= 200) {
+      status = 'Unhealthy for Sensitive Groups 😷';
+      statusClass = 'text-amber-400 bg-amber-500/20 border-amber-500/40';
+    } else if (aqi > 200) {
+      status = 'Hazardous Air Quality ⚠️';
+      statusClass = 'text-rose-400 bg-rose-500/20 border-rose-500/40';
+    }
+
+    if (aqiStatusElem) {
+      aqiStatusElem.innerText = status;
+      aqiStatusElem.className = `px-3 py-1 rounded-full text-xs font-bold border inline-block ${statusClass}`;
+    }
+  }
+
+  updateDynamicAnimationMode() {
+    if (!this.weatherData || !this.weatherData.current_weather || !window.WeatherAnimation) return;
+
+    const cur = this.weatherData.current_weather;
+    const rainProb = this.weatherData.hourly ? this.weatherData.hourly.precipitation_probability[0] || 0 : 0;
+    const meta = this.getWeatherConditionMeta(cur.weathercode, rainProb);
+
+    window.WeatherAnimation.setMode(meta.mode);
+  }
+
+  getWeatherConditionMeta(code, rainProb = 0) {
+    if ([95, 96, 99].includes(code)) {
+      return { text: 'Bijli aur Toofan (Thunderstorm)', icon: 'zap', color: 'text-purple-400', mode: 'thunder' };
+    }
+    if ([71, 73, 75, 77, 85, 86].includes(code)) {
+      return { text: 'Barafbaari (Snowfall)', icon: 'snowflake', color: 'text-sky-200', mode: 'snow' };
+    }
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code) || rainProb >= 45) {
+      return { text: 'Baarish (Rainy)', icon: 'cloud-rain', color: 'text-sky-400', mode: 'rain' };
+    }
+    if ([1, 2, 3, 45, 48].includes(code)) {
+      return { text: 'Baadal (Cloudy)', icon: 'cloud', color: 'text-slate-300', mode: 'clouds' };
+    }
+    return { text: 'Saaf Aakash (Clear Sun)', icon: 'sun', color: 'text-amber-400', mode: 'sun' };
+  }
+
+  setupSettingsHandlers() {
+    const headerLangSelect = document.getElementById('header-lang-select');
+    const settingLangSelect = document.getElementById('setting-lang-select');
+
+    const updateLang = (newLang) => {
+      this.language = newLang;
+      if (headerLangSelect && headerLangSelect.value !== newLang) headerLangSelect.value = newLang;
+      if (settingLangSelect && settingLangSelect.value !== newLang) settingLangSelect.value = newLang;
+      this.applyLanguageToUI(newLang);
+      if (window.AIChatApp && typeof window.AIChatApp.setLanguage === 'function') {
+        window.AIChatApp.setLanguage(newLang);
+      }
+    };
+
+    if (headerLangSelect) {
+      headerLangSelect.addEventListener('change', (e) => updateLang(e.target.value));
+    }
+    if (settingLangSelect) {
+      settingLangSelect.addEventListener('change', (e) => updateLang(e.target.value));
+    }
+
+    const unitToggle = document.getElementById('setting-unit-toggle');
+    if (unitToggle) {
+      unitToggle.addEventListener('change', (e) => {
+        this.unit = e.target.checked ? 'fahrenheit' : 'celsius';
+        this.updateDashboardUI(this.location.name);
+      });
+    }
+  }
+
+  applyLanguageToUI(lang) {
+    const dict = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.hinglish;
+    document.querySelectorAll('[data-i18n]').forEach(elem => {
+      const key = elem.getAttribute('data-i18n');
+      if (dict[key]) {
+        if (elem.tagName === 'INPUT' && elem.hasAttribute('placeholder')) {
+          elem.placeholder = dict[key];
+        } else {
+          elem.innerText = dict[key];
+        }
+      }
+    });
+  }
+
+  initCountdownTimer() {
+    const timerElem = document.getElementById('completion-countdown-timer');
+    if (!timerElem) return;
+
+    timerElem.innerText = '00:00:00 - Project Deployed & Live!';
+    timerElem.className = 'font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 shadow-sm animate-pulse';
+  }
+
+  getWeatherContext() {
+    const cur = this.weatherData ? this.weatherData.current_weather || {} : {};
+    const rainProb = this.weatherData && this.weatherData.hourly ? this.weatherData.hourly.precipitation_probability[0] || 15 : 15;
+    const aqi = this.aqiData && this.aqiData.current ? this.aqiData.current.us_aqi || 45 : 45;
+
+    return {
+      locationName: this.location.name,
+      lat: this.location.lat,
+      lon: this.location.lon,
+      temp: cur.temperature !== undefined ? cur.temperature : 28,
+      weatherCode: cur.weathercode !== undefined ? cur.weathercode : 0,
+      windSpeed: cur.windspeed !== undefined ? cur.windspeed : 12,
+      rainProb: rainProb,
+      aqi: aqi
+    };
+  }
+
+  showGlobalLoader(show) {
+    const loader = document.getElementById('global-spinner');
+    if (loader) {
+      loader.classList.toggle('hidden', !show);
+    }
+  }
+}
+
+window.AppState = null;
+document.addEventListener('DOMContentLoaded', () => {
+  window.AppState = new WeatherGPTApp();
+});

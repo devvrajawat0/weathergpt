@@ -1,113 +1,106 @@
-# WeatherGPT — Conversational AI for Weather Forecasting, Alerts, and Climate Information
+# 🌤️ WeatherGPT - AI Climate & Weather Intelligence Platform (SIH Project)
 
-> **Smart India Hackathon Problem Statement SIH26068**
-
-WeatherGPT is a full-stack, production-ready web application combining real-time weather forecasting, IMD-style severe weather alerts, comprehensive air quality indexing (AQI), static location databases (700+ Indian districts & 195+ world capitals), and a natural-language conversational AI assistant equipped with voice interaction and speech synthesis.
+**WeatherGPT** is a production-grade, AI-powered weather dashboard and climate advisory web application built for the **Smart India Hackathon (SIH)**. It provides real-time satellite weather tracking, dynamic canvas visual particle physics, air quality & UV indices, weather-tailored Indian food & clothing suggestions, agricultural farmer advisories, a multi-city trip planner, text-to-speech audio synthesis, and severe weather disaster safety alerts.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Conversational AI Weather Assistant (`/api/chat`)**
-   - Natural language query understanding ("Will it rain in Bhopal tomorrow?", "Compare weather in Delhi and Tokyo").
-   - Proxies requests to Anthropic Claude API with real-time weather context injection.
-   - Built-in **Intelligent Fallback AI Engine** ensuring 100% functionality out-of-the-box even without an API key.
-   - Supports both **Voice Speech Input** (Web Speech API) and **Text-to-Speech (TTS)** output toggle.
-
-2. **Real Live Weather Data & Air Quality Index**
-   - Live weather forecasts powered by **Open-Meteo API** (No API key required!).
-   - Comprehensive parameters: Temperature, Feels-like, Wind Speed & Direction, Humidity, Pressure, Precipitation, UV Index, Sunrise/Sunset, and 7-day temperature trends.
-   - Real-time AQI metrics: US AQI, PM2.5, PM10, Nitrogen Dioxide (NO2), Ozone (O3), Sulphur Dioxide (SO2).
-
-3. **Complete Static Dataset Coverage (Zero Geocoding Latency)**
-   - Includes all **700+ Indian Districts** grouped by State/UT.
-   - Includes all **195+ World Country Capital Cities**.
-   - Instant search autocomplete and filterable Explorer.
-
-4. **IMD Severe Weather Alert System**
-   - Live color-coded alerts (**Red**, **Orange**, **Yellow**, **Green**) covering Heatwaves, Heavy Rainfall/Floods, Cyclones/Squalls, Thunderstorms, and Air Pollution.
-   - Actionable disaster safety guidelines and emergency helpline contacts.
-
-5. **Apple-Weather & Windy Inspired Design**
-   - Adaptive dynamic gradient backgrounds reflecting current conditions (sunny, rainy, cloudy, night, stormy, snowy).
-   - Glassmorphism UI components, responsive layout across Mobile, Tablet, and Desktop.
-   - Built-in **Dark Mode** toggle.
-   - Interactive **Leaflet Map** centered on selected location.
+1. **Dynamic Geocoding (No Hardcoding)**: Uses Open-Meteo Geocoding API (`https://geocoding-api.open-meteo.com/v1/search`) dynamically for every city/district search and chat query across all 28 Indian States & 8 Union Territories as well as global locations.
+2. **Interactive 60 FPS Particle Canvas**: Custom HTML5 Canvas rendering dynamic weather visual effects (Rain streak splatters, Lightning flashes, Drifting snow, Volumetric fog, Sun ray flares, Clear night starfields) synced with live WMO weather codes.
+3. **AI Chat Assistant (WeatherGPT)**: Natural language weather Q&A powered by Groq (Llama 3.1) and fallback synthesis. Supports multi-city comparisons (e.g., *"Compare weather between Gwalior, Leh and Mumbai"*).
+4. **Food & Clothing Recommendations Panel**: Rule-based mapping of temperature, humidity & conditions to classic Indian delicacies (e.g. *Hot Pakoras & Masala Chai* for rain, *Chilled Lassi & Nimbu Pani* for heatwaves) and outfit choices.
+5. **Smart Agriculture & Farmer Advisory**: Gives real-time field irrigation guidance, crop management directives, and pest infestation risk warnings calculated from rainfall, humidity, and temperature.
+6. **Multi-City Trip & Packing Planner**: Allows users to configure multi-city travel itineraries across date ranges with day-by-day weather forecasts and packing checklists.
+7. **Air Quality Index (AQI) & UV Index**: Integrated Open-Meteo Air Quality API delivering US AQI, PM2.5, PM10 metrics and one-line health advisories.
+8. **Text-to-Speech (TTS) Pipeline**: Hybrid audio player using Sarvam AI Bulbul v3 for natural Indian-accented speech, Google Cloud TTS fallback, and native Web Speech API.
+9. **Hindi & English Dual Localization**: Toggle all UI text, advisories, and chat replies between English and हिन्दी.
+10. **PWA Ready**: Web app manifest (`manifest.json`) and service worker (`sw.js`) enabling one-click mobile installation.
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## 📁 Project Folder Structure
 
 ```
-WeatherGPT Monorepo
-├── /backend            # Node.js + Express API Server
-│   ├── /src/data       # Static Datasets (Districts & Capitals)
-│   ├── /src/services   # Weather, Alert & AI Service Layer
-│   └── /src/routes     # Express Route Handlers
-└── /frontend           # React + TypeScript + Vite + Tailwind CSS
-    ├── /src/components # Glassmorphism UI Components & Leaflet Map
-    ├── /src/views      # Dashboard, Chat, Explorer, Alerts Views
-    └── /src/context    # Dark Mode & Speech Context
+weather-gpt/
+├── index.html                   # Instant browser preview bundle
+├── public/
+│   ├── manifest.json            # PWA manifest
+│   └── sw.js                     # Offline Service Worker
+├── src/
+│   ├── app/                     # Next.js 14 App Router
+│   │   ├── page.tsx             # Main Weather Dashboard
+│   │   ├── chat/page.tsx        # WeatherGPT AI Chat Panel
+│   │   ├── trip-planner/page.tsx# Multi-City Trip Itinerary
+│   │   └── api/
+│   │       ├── chat/route.ts    # Groq / Llama Weather AI Parser
+│   │       └── tts/route.ts     # Sarvam AI / Google Cloud TTS Route
+│   ├── components/
+│   │   ├── WeatherCanvas.tsx    # HTML5 Particle Physics Canvas
+│   │   ├── HeroCard.tsx         # Current Temp & Sunrise/Sunset Arc
+│   │   ├── ForecastStrip.tsx    # Hourly & 7-Day Forecast Cards
+│   │   ├── AQIGauge.tsx         # Air Quality & UV Index Cards
+│   │   ├── FoodClothingCard.tsx # Weather-tailored Food & Outfit Picks
+│   │   ├── FarmerAdvisory.tsx   # Smart AgTech Farmer Guidance
+│   │   ├── AlertModal.tsx       # Severe Weather Popup Warning Modal
+│   │   ├── HistoricalCompare.tsx# "This Day Last Year" Weather Compare
+│   │   ├── FavoriteCities.tsx   # Quick-Switch Indian City Chips
+│   │   └── ShareWeatherCard.tsx # Shareable Image / Summary Exporter
+│   └── lib/
+│       ├── openmeteo.ts         # Satellite Weather & AQI Client
+│       ├── geocoding.ts         # Dynamic Geocoding Engine
+│       ├── suggestions.ts       # Food, Clothing & Farmer Rules
+│       ├── i18n.ts              # English & Hindi Dictionaries
+│        font/                   
+│       └── tts.ts               # Multi-engine Audio Synthesizer
+├── .env.example                 # Reference API Keys
+└── package.json                 # Next.js 14 Dependencies
 ```
-
-* **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide React, Leaflet (`react-leaflet`), TanStack React Query, Web Speech API.
-* **Backend**: Node.js, Express, `@anthropic-ai/sdk`, `node-cache` (15-min TTL), `express-rate-limit`, `cors`.
 
 ---
 
-## 🚀 Quick Start Guide
+## ⚡ How to Run Locally
 
 ### Prerequisites
-* Node.js v18+ and npm installed.
+- Node.js (v18.0 or higher) installed on your system.
 
-### 1. Installation
-Clone the repository and install dependencies across the monorepo:
+### Steps
+1. Navigate to the project directory:
+   ```bash
+   cd C:\Users\HP\.gemini\antigravity\scratch\weather-gpt
+   ```
 
-```bash
-# Install all root, backend, and frontend dependencies
-npm run install:all
-```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Alternatively:
-```bash
-npm install
-cd backend && npm install
-cd ../frontend && npm install
-cd ..
-```
+3. Create `.env.local` (Copy from `.env.example`):
+   ```bash
+   cp .env.example .env.local
+   ```
+   *(Add your `GROQ_API_KEY`, `SARVAM_API_KEY` optional)*
 
-### 2. Environment Configuration
-Create a `.env` file inside `/backend` (or copy `.env.example`):
+4. Start the Next.js development server:
+   ```bash
+   npm run dev
+   ```
 
-```env
-PORT=5000
-ANTHROPIC_API_KEY=your_optional_anthropic_api_key
-```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-> **Note**: If `ANTHROPIC_API_KEY` is omitted, WeatherGPT automatically uses its built-in Intelligent Fallback AI Weather Engine to synthesize data-backed answers!
-
-### 3. Run Locally (Concurrent Launch)
-Launch both frontend (Vite on `http://localhost:3000`) and backend (Express on `http://localhost:5000`) concurrently:
-
-```bash
-npm run dev
-```
-
-Open your browser and navigate to:
-👉 `http://localhost:3000`
+> **Instant Preview**: You can also open `index.html` directly in any web browser without running any commands!
 
 ---
 
-## 🧪 Testing Verification & Endpoints
+## 🚀 Deploy to Vercel
 
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `GET /api/weather/forecast?lat=...&lon=...` | GET | Returns live weather, 7-day forecast, AQI, and alerts. |
-| `GET /api/weather/alerts` | GET | Returns live IMD-style severe weather warnings. |
-| `GET /api/locations/search?q=bhopal` | GET | Instant autocomplete over 700+ districts & 195+ capitals. |
-| `POST /api/chat` | POST | WeatherGPT Conversational AI endpoint. |
+1. Push your repository to GitHub / GitLab.
+2. Go to [Vercel Dashboard](https://vercel.com) and click **Add New Project**.
+3. Import your `weather-gpt` repository.
+4. Add environment variables (`GROQ_API_KEY`, `SARVAM_API_KEY`, `GOOGLE_CLOUD_TTS_KEY`) under **Environment Variables**.
+5. Click **Deploy**. Vercel will automatically build and deploy your application to a global CDN!
 
 ---
 
-## 📜 Disclaimer
-Forecasts, AI responses, and advice in WeatherGPT are provided for informational purposes. For official emergency declarations, always consult the **India Meteorological Department (IMD)** or local government warnings.
+## 📄 License
+Created for Smart India Hackathon (SIH). Open Source MIT License.

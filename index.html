@@ -1,19 +1,177 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WeatherGPT — Conversational AI Weather Assistant</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/weathergpt/assets/index-V8e8iPip.js"></script>
-    <link rel="stylesheet" crossorigin href="/weathergpt/assets/index-DryCoShn.css">
-  </head>
-  <body class="bg-slate-900 text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-white transition-colors duration-300">
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeatherGPT - AI Climate Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 1.25rem;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden">
+  <canvas id="weatherCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+  <div class="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <!-- Navbar -->
+    <header class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 glass-panel">
+      <div className="flex items-center gap-2">
+        <h1 class="text-2xl font-black text-white">Weather<span class="text-blue-400">GPT</span></h1>
+        <span class="text-xs px-2.5 py-1 bg-blue-500/20 text-blue-300 rounded-full border border-blue-400/30">SIH Edition</span>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input id="searchInput" type="text" placeholder="Search city (e.g., Gwalior, Delhi, London)..." class="px-4 py-2 text-sm bg-slate-900/80 border border-white/20 rounded-xl text-white w-full sm:w-80 outline-none focus:border-blue-400">
+        <button id="searchBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-lg transition">Search</button>
+      </div>
+    </header>
+
+    <!-- Main Hero Card -->
+    <div id="heroCard" class="glass-panel p-6 sm:p-8 space-y-6">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <h2 id="cityName" class="text-3xl font-extrabold text-white">Gwalior, MP</h2>
+          <p id="todayDate" class="text-xs text-slate-400 mt-1">Real-Time Satellite Stream</p>
+        </div>
+        <button id="ttsBtn" class="px-4 py-2 text-xs font-semibold bg-blue-600/30 border border-blue-400/40 text-blue-200 rounded-xl hover:bg-blue-600/50">🔊 Listen Weather</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+        <div class="flex items-center gap-4">
+          <div id="tempVal" class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-blue-200">28°C</div>
+          <div>
+            <div id="conditionVal" class="text-lg font-bold text-blue-300">Partly Cloudy</div>
+            <div id="feelsVal" class="text-xs text-slate-400">Feels like 29°C</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 col-span-2 text-xs">
+          <div class="glass-card p-3">
+            <span class="text-slate-400">Humidity</span>
+            <div id="humidityVal" class="text-base font-bold text-white mt-0.5">65%</div>
+          </div>
+          <div class="glass-card p-3">
+            <span class="text-slate-400">Wind Speed</span>
+            <div id="windVal" class="text-base font-bold text-white mt-0.5">14 km/h</div>
+          </div>
+          <div class="glass-card p-3">
+            <span class="text-slate-400">Air Quality (AQI)</span>
+            <div id="aqiVal" class="text-base font-bold text-emerald-400 mt-0.5">42 Good</div>
+          </div>
+          <div class="glass-card p-3">
+            <span class="text-slate-400">UV Index</span>
+            <div id="uvVal" class="text-base font-bold text-amber-300 mt-0.5">5 Moderate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="glass-panel p-5">
+        <h3 class="font-bold text-white mb-2 text-sm">🍲 Weather-Tailored Food Suggestions</h3>
+        <p id="foodBox" class="text-xs text-slate-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/10">Loading suggestions...</p>
+      </div>
+      <div class="glass-panel p-5">
+        <h3 class="font-bold text-white mb-2 text-sm">🌾 Agricultural & Farmer Advisory</h3>
+        <p id="farmerBox" class="text-xs text-slate-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/10">Loading farmer advisory...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas Animation
+    const canvas = document.getElementById('weatherCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 1,
+      speedY: Math.random() * 8 + 4
+    }));
+
+    function drawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.4)';
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        p.y += p.speedY;
+        if (p.y > canvas.height) p.y = -10;
+      });
+      requestAnimationFrame(drawCanvas);
+    }
+    drawCanvas();
+
+    // Weather API fetch
+    async function loadCity(query) {
+      try {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`);
+        const geoData = await geoRes.json();
+        const loc = geoData.results ? geoData.results[0] : { name: 'Gwalior', latitude: 26.2235, longitude: 78.1792 };
+
+        document.getElementById('cityName').innerText = `${loc.name}, ${loc.country || 'India'}`;
+
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,uv_index`);
+        const data = await weatherRes.json();
+        const c = data.current;
+
+        document.getElementById('tempVal').innerText = `${Math.round(c.temperature_2m)}°C`;
+        document.getElementById('feelsVal').innerText = `Feels like ${Math.round(c.apparent_temperature)}°C`;
+        document.getElementById('humidityVal').innerText = `${c.relative_humidity_2m}%`;
+        document.getElementById('windVal').innerText = `${c.wind_speed_10m} km/h`;
+        document.getElementById('uvVal').innerText = `${c.uv_index || 4} / 12`;
+
+        document.getElementById('foodBox').innerText = c.temperature_2m < 20
+          ? 'Hot Gajar Ka Halwa, Spiced Masala Chai, Vegetable Soup & Woolen Innerwear.'
+          : c.temperature_2m > 30
+          ? 'Chilled Sweet Lassi, Fresh Nimbu Pani, Watermelon Cubes & Light Cotton Apparel.'
+          : 'Crispy Samosa, Filter Coffee, Fresh Fruit Salad & Light Casual Jackets.';
+
+        document.getElementById('farmerBox').innerText = c.precipitation > 5
+          ? 'Postpone irrigation due to active rainfall. Ensure soil drainage channels are clear.'
+          : 'Perform normal early morning crop irrigation. Inspect field crops for pest activity.';
+
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    document.getElementById('searchBtn').onclick = () => {
+      const q = document.getElementById('searchInput').value;
+      if (q) loadCity(q);
+    };
+
+    document.getElementById('ttsBtn').onclick = () => {
+      const text = document.getElementById('cityName').innerText + " temperature is " + document.getElementById('tempVal').innerText;
+      const synth = window.speechSynthesis;
+      const u = new SpeechSynthesisUtterance(text);
+      synth.speak(u);
+    };
+
+    loadCity('Gwalior');
+  </script>
+</body>
 </html>

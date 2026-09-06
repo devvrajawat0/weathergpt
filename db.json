@@ -1,0 +1,74 @@
+{
+  "settings": {
+    "language": "hinglish",
+    "unit": "celsius",
+    "theme": "dynamic",
+    "voiceEnabled": true,
+    "notifications": true
+  },
+  "savedLocations": [
+    {
+      "name": "Prestige Gwalior, MP",
+      "lat": 26.2464,
+      "lon": 78.1884,
+      "type": "Institute & District",
+      "country": "India"
+    },
+    {
+      "name": "Gwalior, MP",
+      "lat": 26.2183,
+      "lon": 78.1772,
+      "type": "District",
+      "country": "India"
+    },
+    {
+      "name": "Mumbai, Maharashtra",
+      "lat": 19.076,
+      "lon": 72.8777,
+      "type": "District",
+      "country": "India"
+    },
+    {
+      "name": "Lucknow, UP",
+      "lat": 26.8467,
+      "lon": 80.9462,
+      "type": "District",
+      "country": "India"
+    },
+    {
+      "name": "Shimla, HP",
+      "lat": 31.1048,
+      "lon": 77.1734,
+      "type": "District",
+      "country": "India"
+    },
+    {
+      "name": "Jaipur, Rajasthan",
+      "lat": 26.9124,
+      "lon": 75.7873,
+      "type": "District",
+      "country": "India"
+    }
+  ],
+  "customAlerts": [
+    {
+      "id": 1,
+      "condition": "Rain Probability > 60%",
+      "location": "Current Location",
+      "active": true
+    },
+    {
+      "id": 2,
+      "condition": "Temperature > 40°C",
+      "location": "Current Location",
+      "active": true
+    },
+    {
+      "id": 3,
+      "condition": "AQI > 200 (Poor)",
+      "location": "Current Location",
+      "active": true
+    }
+  ],
+  "chatHistory": []
+}
