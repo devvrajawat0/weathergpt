@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherGPT — AI Climate & Weather Intelligence Platform</title>
+  <title>WeatherGPT — AI Climate Platform with Interactive Map & Trip Planner</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet Maps CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="manifest" href="manifest.json" />
   <style>
     body {
@@ -41,6 +44,21 @@
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    #weatherMap {
+      height: 340px;
+      width: 100%;
+      border-radius: 1rem;
+      z-index: 10;
+    }
+    .leaflet-popup-content-wrapper {
+      background: rgba(15, 23, 42, 0.95);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.75rem;
+    }
+    .leaflet-popup-tip {
+      background: rgba(15, 23, 42, 0.95);
     }
     ::-webkit-scrollbar {
       height: 6px;
@@ -96,7 +114,7 @@
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
       
       <!-- Severe Weather Popup Alert Modal -->
-      <div id="alertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+      <div id="alertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
         <div class="relative w-full max-w-lg glass-panel p-6 border-red-500/50 shadow-2xl text-white">
           <div class="flex items-center justify-between border-b border-red-500/30 pb-3 mb-3">
             <div class="flex items-center gap-2 text-red-400 font-bold">
@@ -110,7 +128,7 @@
         </div>
       </div>
 
-      <!-- TAB 1: DASHBOARD (Current Weather, Forecasts, AQI, Food, Farmer Advisory) -->
+      <!-- TAB 1: DASHBOARD (Current Weather, Forecasts, Map, AQI, Food, Farmer Advisory) -->
       <section id="viewDashboard" class="space-y-6">
         <!-- Hero Card -->
         <div class="glass-panel p-6 sm:p-8 relative overflow-hidden">
@@ -177,6 +195,15 @@
             </div>
             <span>🌇 <span id="lblSunset">Sunset</span>: <strong id="heroSunset" class="text-white">06:45 PM</strong></span>
           </div>
+        </div>
+
+        <!-- Interactive Leaflet Weather & Navigation Map -->
+        <div class="glass-panel p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white text-sm flex items-center gap-2" id="lblMapTitle">🗺️ Interactive Navigation & Satellite Weather Map</h3>
+            <span class="text-xs text-blue-300 bg-blue-500/20 px-2.5 py-1 rounded-full border border-blue-400/30" id="mapBadge">OpenStreetMap Radar</span>
+          </div>
+          <div id="weatherMap"></div>
         </div>
 
         <!-- Quick Switch City Chips -->
@@ -246,7 +273,7 @@
         </div>
 
         <div id="chatMessages" class="glass-panel p-4 h-[60vh] overflow-y-auto space-y-3">
-          <div className="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-100 max-w-[85%]" id="chatWelcomeMsg">
+          <div class="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-100 max-w-[85%]" id="chatWelcomeMsg">
             🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city, hourly forecast, or multi-city comparison!
           </div>
         </div>
@@ -257,13 +284,13 @@
         </div>
       </section>
 
-      <!-- TAB 3: TRIP PLANNER -->
+      <!-- TAB 3: TRIP PLANNER (REAL OPEN-METEO MULTI-CITY API) -->
       <section id="viewTrip" class="hidden space-y-4 max-w-4xl mx-auto">
         <div class="glass-panel p-6">
           <h2 class="font-bold text-white text-base mb-4" id="lblTripTitle">🧭 Weather-Aware Multi-City Trip Planner</h2>
           <div class="space-y-4">
             <div>
-              <label class="text-xs text-slate-300 block mb-1" id="lblTripInputHeader">Add Destinations</label>
+              <label class="text-xs text-slate-300 block mb-1" id="lblTripInputHeader">Add Destinations (Real Satellite Weather API)</label>
               <div class="flex gap-2">
                 <input id="tripCityInput" type="text" placeholder="Enter city (e.g. Jaipur, Goa, Manali)..." class="flex-1 px-4 py-2 text-sm glass-input" />
                 <button id="tripAddBtn" onclick="addTripCity()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl">+ Add</button>
@@ -272,11 +299,13 @@
 
             <div id="tripCityChips" class="flex flex-wrap gap-2"></div>
 
-            <button id="tripGenBtn" onclick="generateTripItinerary()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg">Generate Smart Itinerary & Packing Guide</button>
+            <button id="tripGenBtn" onclick="generateTripItinerary()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2">
+              <span>🚀 Fetch Real Multi-City Satellite Weather Itinerary</span>
+            </button>
           </div>
         </div>
 
-        <div id="tripResults" class="space-y-3"></div>
+        <div id="tripResults" class="space-y-4"></div>
       </section>
 
     </main>
@@ -284,7 +313,7 @@
     <!-- Footer -->
     <footer class="py-6 border-t border-white/10 text-center text-xs text-slate-400 bg-slate-950/80 mt-auto">
       <p id="footerTitle">WeatherGPT Platform • Smart India Hackathon (SIH) Project</p>
-      <p class="mt-1 text-slate-500" id="footerSub">Powered by Open-Meteo Satellite Meteorological Data Models</p>
+      <p class="mt-1 text-slate-500" id="footerSub">Powered by Open-Meteo Satellite Meteorological Data Models & Leaflet Maps</p>
     </footer>
   </div>
 
@@ -334,7 +363,6 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, width, height);
 
-        // Sun Glow Rays
         ctx.beginPath();
         ctx.arc(width * 0.85, 110, 85, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(253, 224, 71, 0.3)';
@@ -352,7 +380,6 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, width, height);
 
-        // Twinkling Stars
         particles.forEach(p => {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius * 0.7, 0, Math.PI * 2);
@@ -360,7 +387,6 @@
           ctx.fill();
         });
 
-        // Crescent Moon
         ctx.beginPath();
         ctx.arc(width * 0.85, 110, 40, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(243, 244, 246, 0.9)';
@@ -372,7 +398,6 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, width, height);
 
-        // Drifting Volumetric Clouds
         particles.forEach(p => {
           p.x += p.speedX * 0.3;
           if (p.x > width) p.x = 0;
@@ -396,7 +421,6 @@
           }
         }
 
-        // Falling Rain Streaks
         ctx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -432,6 +456,35 @@
     renderCanvasAnimation();
 
     // ----------------------------------------------------
+    // LEAFLET MAP INITIALIZATION & ROUTE ENGINE
+    // ----------------------------------------------------
+    let map = null;
+    let mainMarker = null;
+    let tripPolyline = null;
+    let tripMarkers = [];
+
+    function initMap(lat = 26.2235, lon = 78.1792, cityName = 'Gwalior') {
+      if (typeof L === 'undefined') return;
+
+      if (!map) {
+        map = L.map('weatherMap').setView([lat, lon], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 18,
+        }).addTo(map);
+      } else {
+        map.setView([lat, lon], 8);
+      }
+
+      if (mainMarker) map.removeLayer(mainMarker);
+
+      mainMarker = L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup(`<b>${cityName}</b><br>Active Weather Monitoring Node`)
+        .openPopup();
+    }
+
+    // ----------------------------------------------------
     // FULL HINDI & ENGLISH DICTIONARY LOCALIZATION
     // ----------------------------------------------------
     const i18n = {
@@ -451,6 +504,7 @@
         sunrise: 'Sunrise',
         sunset: 'Sunset',
         popularCities: 'Popular Indian Cities',
+        mapTitle: '🗺️ Interactive Navigation & Satellite Weather Map',
         aqiTitle: '💨 Air Quality Index (AQI)',
         uvTitle: '☀️ UV Index & Protection',
         forecastTitle: '⏰ 24-Hour & 7-Day Forecast',
@@ -463,12 +517,12 @@
         chatPlaceholder: 'Ask WeatherGPT AI (e.g. Is it raining in Mumbai?)...',
         sendBtn: 'Send',
         tripTitle: '🧭 Weather-Aware Multi-City Trip Planner',
-        tripInputHeader: 'Add Destinations',
+        tripInputHeader: 'Add Destinations (Real Satellite Weather API)',
         tripCityPlaceholder: 'Enter city (e.g. Jaipur, Goa, Manali)...',
         addBtn: '+ Add',
-        tripGenBtn: 'Generate Smart Itinerary & Packing Guide',
+        tripGenBtn: '🚀 Fetch Real Multi-City Satellite Weather Itinerary',
         footerTitle: 'WeatherGPT Platform • Smart India Hackathon (SIH) Project',
-        footerSub: 'Powered by Open-Meteo Satellite Meteorological Data Models',
+        footerSub: 'Powered by Open-Meteo Satellite Meteorological Data Models & Leaflet Maps',
         alertSeverity: 'SEVERE WEATHER ALERT',
         alertDismiss: 'Acknowledge & Dismiss'
       },
@@ -488,6 +542,7 @@
         sunrise: 'सूर्योदय',
         sunset: 'सूर्यास्त',
         popularCities: 'प्रमुख भारतीय शहर',
+        mapTitle: '🗺️ इंटरएक्टिव नेविगेशन एवं उपग्रह मौसम मानचित्र',
         aqiTitle: '💨 वायु गुणवत्ता सूचकांक (AQI)',
         uvTitle: '☀️ यूवी इंडेक्स एवं धूप सुरक्षा',
         forecastTitle: '⏰ 24-घंटे एवं 7-दिवसीय मौसम पूर्वानुमान',
@@ -500,12 +555,12 @@
         chatPlaceholder: 'मौसमGPT एआई से पूछें (जैसे: क्या मुंबई में बारिश हो रही है?)...',
         sendBtn: 'भेजें',
         tripTitle: '🧭 मौसम-आधारित बहु-शहर यात्रा योजनाकार',
-        tripInputHeader: 'गंतव्य शहर जोड़ें',
+        tripInputHeader: 'गंतव्य शहर जोड़ें (लाइव उपग्रह मौसम एपीआई)',
         tripCityPlaceholder: 'शहर का नाम दर्ज करें (जैसे: जयपुर, गोवा, मनाली)...',
         addBtn: '+ जोड़ें',
-        tripGenBtn: 'स्मार्ट यात्रा योजना एवं पैंकिंग गाइड बनाएं',
+        tripGenBtn: '🚀 वास्तविक उपग्रह मौसम यात्रा योजना प्राप्त करें',
         footerTitle: 'मौसमGPT प्लेटफ़ॉर्म • स्मार्ट इंडिया हैकथॉन (SIH) प्रोजेक्ट',
-        footerSub: 'ओपन-मीटियो उपग्रह मौसम डेटा मॉडल द्वारा संचालित',
+        footerSub: 'ओपन-मीटियो उपग्रह डेटा एवं लीफ़लेट मानचित्र द्वारा संचालित',
         alertSeverity: 'गंभीर मौसम चेतावनी',
         alertDismiss: 'स्वीकार करें एवं बंद करें'
       }
@@ -536,6 +591,7 @@
       document.getElementById('lblSunrise').innerText = dict.sunrise;
       document.getElementById('lblSunset').innerText = dict.sunset;
       document.getElementById('lblPopularCities').innerText = dict.popularCities;
+      document.getElementById('lblMapTitle').innerText = dict.mapTitle;
 
       document.getElementById('lblAQITitle').innerText = dict.aqiTitle;
       document.getElementById('lblUVTitle').innerText = dict.uvTitle;
@@ -581,6 +637,7 @@
       if (tab === 'dashboard') {
         document.getElementById('viewDashboard').classList.remove('hidden');
         document.getElementById('tabDashboardBtn').className = 'px-3 py-2 text-xs font-semibold rounded-xl border bg-blue-600/40 border-blue-400 text-white';
+        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
       } else if (tab === 'chat') {
         document.getElementById('viewChat').classList.remove('hidden');
         document.getElementById('tabChatBtn').className = 'px-3 py-2 text-xs font-semibold rounded-xl border bg-emerald-600/40 border-emerald-400 text-white';
@@ -668,6 +725,9 @@
         else if (code === 45 || code === 48) initParticles('fog');
         else if (code >= 2) initParticles('cloudy');
         else initParticles(isDay ? 'clear-day' : 'clear-night');
+
+        // Update Map Center and Marker
+        initMap(geo.latitude, geo.longitude, geo.name);
 
         renderWeatherData(currentWeatherData);
       } catch (e) { console.error('Failed to fetch weather', e); }
@@ -845,7 +905,9 @@
       }, 400);
     }
 
-    // Trip Planner System
+    // ----------------------------------------------------
+    // TRIP PLANNER WITH REAL OPEN-METEO MULTI-CITY API
+    // ----------------------------------------------------
     function renderTripCities() {
       const container = document.getElementById('tripCityChips');
       container.innerHTML = tripCities.map(c => 
@@ -867,19 +929,79 @@
       renderTripCities();
     }
 
-    function generateTripItinerary() {
+    async function generateTripItinerary() {
       const container = document.getElementById('tripResults');
-      container.innerHTML = tripCities.map(city => 
-        `<div class="glass-panel p-4 space-y-2 text-xs">
-          <div class="font-bold text-white text-sm">📍 ${city} (${activeLang==='hi'?'5-दिवसीय यात्रा योजना':'5-Day Itinerary'})</div>
-          <p class="text-slate-300">${activeLang==='hi'?'औसत तापमान: 26°C / 18°C। सुहावना मौसम रहेगा।':'Expected Average Temp: 26°C / 18°C. Clear pleasant skies forecast.'}</p>
-          <div class="text-purple-300 font-semibold">${activeLang==='hi'?'अनुशंसित पैकिंग: सूती वस्त्र, आरामदायक जूते, धूप का चश्मा एवं सनस्क्रीन।':'Recommended Packing: Light cotton tops, comfortable walking sneakers, sunglasses & sunscreen SPF50+.'}</div>
-        </div>`
-      ).join('');
+      container.innerHTML = `<div class="p-6 text-center text-xs text-purple-300 font-bold bg-white/5 rounded-xl border border-purple-500/30 flex items-center justify-center gap-2">
+        <span class="animate-spin text-lg">⏳</span> Querying Open-Meteo Satellite API for ${tripCities.length} destination cities...
+      </div>`;
+
+      try {
+        const routeCoords = [];
+        const cityDataList = await Promise.all(tripCities.map(async (cityName) => {
+          const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1`).then(r => r.json());
+          if (!geoRes.results || geoRes.results.length === 0) return null;
+          const loc = geoRes.results[0];
+          routeCoords.push([loc.latitude, loc.longitude]);
+
+          const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`).then(r => r.json());
+
+          return { loc, daily: wRes.daily };
+        }));
+
+        const validCities = cityDataList.filter(c => c !== null);
+
+        // Plot Route Line on Map if map initialized
+        if (map && routeCoords.length > 1) {
+          if (tripPolyline) map.removeLayer(tripPolyline);
+          tripMarkers.forEach(m => map.removeLayer(m));
+          tripMarkers = [];
+
+          tripPolyline = L.polyline(routeCoords, { color: '#a855f7', weight: 4, dashArray: '8, 8' }).addTo(map);
+          routeCoords.forEach((coord, idx) => {
+            const m = L.circleMarker(coord, { radius: 7, fillColor: '#3b82f6', color: '#ffffff', weight: 2, fillOpacity: 1 }).addTo(map);
+            m.bindPopup(`<b>Stop ${idx + 1}: ${validCities[idx].loc.name}</b>`);
+            tripMarkers.push(m);
+          });
+          map.fitBounds(tripPolyline.getBounds(), { padding: [30, 30] });
+        }
+
+        container.innerHTML = validCities.map(c => {
+          const maxT = Math.round(c.daily.temperature_2m_max[0]);
+          const minT = Math.round(c.daily.temperature_2m_min[0]);
+          const rainSum = c.daily.precipitation_sum[0] || 0;
+          const packing = [];
+          if (rainSum > 2) packing.push('Umbrella & Raincoat', 'Waterproof shoes');
+          else if (maxT > 30) packing.push('Light cotton clothes', 'Sunscreen SPF50+', 'Sunglasses');
+          else packing.push('Warm sweater/jacket', 'Beanie cap');
+
+          return `
+            <div class="glass-panel p-5 space-y-3">
+              <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                <div class="font-bold text-white text-sm flex items-center gap-1.5">
+                  <span>📍</span> ${c.loc.name}, ${c.loc.country || 'India'}
+                </div>
+                <span class="text-xs text-purple-300 font-bold px-2 py-0.5 bg-purple-500/20 rounded-full border border-purple-500/30">Live Satellite Data</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-300">Max/Min Temp: <strong class="text-white">${maxT}°C / ${minT}°C</strong></span>
+                <span class="text-slate-300">Rainfall: <strong class="text-blue-300">${rainSum.toFixed(1)} mm</strong></span>
+              </div>
+              <div class="bg-white/5 p-3 rounded-xl border border-white/10 text-xs space-y-1">
+                <strong class="text-purple-300 block">🧳 Smart Packing Recommendations:</strong>
+                <p class="text-slate-200">${packing.join(' • ')}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch(e) {
+        container.innerHTML = `<div class="p-4 text-xs text-red-400 bg-red-950/40 rounded-xl border border-red-500/30">Failed to load real satellite data for itinerary.</div>`;
+      }
     }
 
     // Initialize
     loadWeather(currentGeo);
+    setTimeout(() => initMap(currentGeo.latitude, currentGeo.longitude, currentGeo.name), 300);
   </script>
 </body>
 </html>
