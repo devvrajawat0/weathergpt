@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherGPT — AI Climate Platform with Interactive Map & Trip Planner</title>
+  <title>WeatherGPT — AI Climate Platform with Interactive Map, Sightseeing & Trip Planner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Leaflet Maps CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -128,7 +128,7 @@
         </div>
       </div>
 
-      <!-- TAB 1: DASHBOARD (Current Weather, Forecasts, Map, AQI, Food, Farmer Advisory) -->
+      <!-- TAB 1: DASHBOARD -->
       <section id="viewDashboard" class="space-y-6">
         <!-- Hero Card -->
         <div class="glass-panel p-6 sm:p-8 relative overflow-hidden">
@@ -284,15 +284,15 @@
         </div>
       </section>
 
-      <!-- TAB 3: TRIP PLANNER (REAL OPEN-METEO MULTI-CITY API) -->
+      <!-- TAB 3: TRIP PLANNER WITH CITY-SPECIFIC CLOTHES & TOURIST ATTRACTIONS -->
       <section id="viewTrip" class="hidden space-y-4 max-w-4xl mx-auto">
         <div class="glass-panel p-6">
           <h2 class="font-bold text-white text-base mb-4" id="lblTripTitle">🧭 Weather-Aware Multi-City Trip Planner</h2>
           <div class="space-y-4">
             <div>
-              <label class="text-xs text-slate-300 block mb-1" id="lblTripInputHeader">Add Destinations (Real Satellite Weather API)</label>
+              <label class="text-xs text-slate-300 block mb-1" id="lblTripInputHeader">Add Destinations (Real Satellite Weather & Sightseeing Places)</label>
               <div class="flex gap-2">
-                <input id="tripCityInput" type="text" placeholder="Enter city (e.g. Jaipur, Goa, Manali)..." class="flex-1 px-4 py-2 text-sm glass-input" />
+                <input id="tripCityInput" type="text" placeholder="Enter city (e.g. Jaipur, Goa, Manali, Shimla)..." class="flex-1 px-4 py-2 text-sm glass-input" />
                 <button id="tripAddBtn" onclick="addTripCity()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl">+ Add</button>
               </div>
             </div>
@@ -300,7 +300,7 @@
             <div id="tripCityChips" class="flex flex-wrap gap-2"></div>
 
             <button id="tripGenBtn" onclick="generateTripItinerary()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2">
-              <span>🚀 Fetch Real Multi-City Satellite Weather Itinerary</span>
+              <span>🚀 Fetch Multi-City Weather, Varying Outfit Guide & Top Places to Visit</span>
             </button>
           </div>
         </div>
@@ -485,6 +485,33 @@
     }
 
     // ----------------------------------------------------
+    // SIGHTSEEING PLACES TO VISIT DICTIONARY
+    // ----------------------------------------------------
+    const CITY_ATTRACTIONS = {
+      'gwalior': ['Gwalior Fort', 'Jai Vilas Palace', 'Tansen Tomb', 'Saas Bahu Temple', 'Sun Temple'],
+      'jaipur': ['Hawa Mahal', 'Amer Fort', 'City Palace', 'Jantar Mantar', 'Nahargarh Fort'],
+      'shimla': ['Mall Road', 'Jakhoo Temple', 'Kufri', 'The Ridge', 'Christ Church'],
+      'delhi': ['Red Fort', 'Qutub Minar', 'India Gate', 'Lotus Temple', 'Humayun Tomb'],
+      'new delhi': ['India Gate', 'Rashtrapati Bhavan', 'Qutub Minar', 'Lotus Temple', 'Lodhi Garden'],
+      'mumbai': ['Gateway of India', 'Marine Drive', 'Elephanta Caves', 'Colaba Causeway', 'Juhu Beach'],
+      'goa': ['Calangute Beach', 'Fort Aguada', 'Basilica of Bom Jesus', 'Dudhsagar Falls', 'Anjuna Market'],
+      'manali': ['Solang Valley', 'Rohtang Pass', 'Hadimba Temple', 'Jogini Waterfall', 'Mall Road'],
+      'varanasi': ['Kashi Vishwanath Temple', 'Dashashwamedh Ghat', 'Sarnath', 'Assi Ghat', 'Ganga Aarti'],
+      'kochi': ['Fort Kochi', 'Mattancherry Palace', 'Chinese Fishing Nets', 'Cherai Beach', 'Jew Town'],
+      'kolkata': ['Victoria Memorial', 'Howrah Bridge', 'Dakshineswar Temple', 'Park Street', 'Science City'],
+      'bengaluru': ['Lalbagh Botanical Garden', 'Bangalore Palace', 'Cubbon Park', 'ISKCON Temple', 'Bannerghatta National Park'],
+      'bhopal': ['Upper Lake (Bada Talaab)', 'Van Vihar National Park', 'Taj-ul-Masajid', 'Sanchi Stupa', 'Shaukat Mahal'],
+      'leh': ['Pangong Lake', 'Nubra Valley', 'Shanti Stupa', 'Khardung La Pass', 'Magnetic Hill'],
+      'agra': ['Taj Mahal', 'Agra Fort', 'Fatehpur Sikri', 'Mehtab Bagh', 'Itimad-ud-Daulah'],
+      'udaipur': ['City Palace', 'Lake Pichola', 'Jag Mandir', 'Fateh Sagar Lake', 'Saheliyon-ki-Bari']
+    };
+
+    function getCityAttractions(cityName) {
+      const key = cityName.toLowerCase();
+      return CITY_ATTRACTIONS[key] || ['Historic Forts & Palaces', 'Local Heritage Bazaars', 'Scenic Viewpoints & City Gardens', 'Cultural Museums', 'Famous Local Temples'];
+    }
+
+    // ----------------------------------------------------
     // FULL HINDI & ENGLISH DICTIONARY LOCALIZATION
     // ----------------------------------------------------
     const i18n = {
@@ -517,10 +544,10 @@
         chatPlaceholder: 'Ask WeatherGPT AI (e.g. Is it raining in Mumbai?)...',
         sendBtn: 'Send',
         tripTitle: '🧭 Weather-Aware Multi-City Trip Planner',
-        tripInputHeader: 'Add Destinations (Real Satellite Weather API)',
-        tripCityPlaceholder: 'Enter city (e.g. Jaipur, Goa, Manali)...',
+        tripInputHeader: 'Add Destinations (Real Satellite Weather & Sightseeing Places)',
+        tripCityPlaceholder: 'Enter city (e.g. Jaipur, Goa, Manali, Shimla)...',
         addBtn: '+ Add',
-        tripGenBtn: '🚀 Fetch Real Multi-City Satellite Weather Itinerary',
+        tripGenBtn: '🚀 Fetch Multi-City Weather, Varying Outfit Guide & Top Places to Visit',
         footerTitle: 'WeatherGPT Platform • Smart India Hackathon (SIH) Project',
         footerSub: 'Powered by Open-Meteo Satellite Meteorological Data Models & Leaflet Maps',
         alertSeverity: 'SEVERE WEATHER ALERT',
@@ -555,10 +582,10 @@
         chatPlaceholder: 'मौसमGPT एआई से पूछें (जैसे: क्या मुंबई में बारिश हो रही है?)...',
         sendBtn: 'भेजें',
         tripTitle: '🧭 मौसम-आधारित बहु-शहर यात्रा योजनाकार',
-        tripInputHeader: 'गंतव्य शहर जोड़ें (लाइव उपग्रह मौसम एपीआई)',
+        tripInputHeader: 'गंतव्य शहर जोड़ें (उपग्रह मौसम एवं दर्शनीय स्थल)',
         tripCityPlaceholder: 'शहर का नाम दर्ज करें (जैसे: जयपुर, गोवा, मनाली)...',
         addBtn: '+ जोड़ें',
-        tripGenBtn: '🚀 वास्तविक उपग्रह मौसम यात्रा योजना प्राप्त करें',
+        tripGenBtn: '🚀 बहु-शहर मौसम, भिन्न पहनावा सलाह एवं दर्शनीय स्थल देखें',
         footerTitle: 'मौसमGPT प्लेटफ़ॉर्म • स्मार्ट इंडिया हैकथॉन (SIH) प्रोजेक्ट',
         footerSub: 'ओपन-मीटियो उपग्रह डेटा एवं लीफ़लेट मानचित्र द्वारा संचालित',
         alertSeverity: 'गंभीर मौसम चेतावनी',
@@ -726,9 +753,7 @@
         else if (code >= 2) initParticles('cloudy');
         else initParticles(isDay ? 'clear-day' : 'clear-night');
 
-        // Update Map Center and Marker
         initMap(geo.latitude, geo.longitude, geo.name);
-
         renderWeatherData(currentWeatherData);
       } catch (e) { console.error('Failed to fetch weather', e); }
     }
@@ -906,7 +931,7 @@
     }
 
     // ----------------------------------------------------
-    // TRIP PLANNER WITH REAL OPEN-METEO MULTI-CITY API
+    // TRIP PLANNER WITH VARYING OUTFITS & TOURIST ATTRACTIONS
     // ----------------------------------------------------
     function renderTripCities() {
       const container = document.getElementById('tripCityChips');
@@ -932,7 +957,7 @@
     async function generateTripItinerary() {
       const container = document.getElementById('tripResults');
       container.innerHTML = `<div class="p-6 text-center text-xs text-purple-300 font-bold bg-white/5 rounded-xl border border-purple-500/30 flex items-center justify-center gap-2">
-        <span class="animate-spin text-lg">⏳</span> Querying Open-Meteo Satellite API for ${tripCities.length} destination cities...
+        <span class="animate-spin text-lg">⏳</span> Querying Open-Meteo Satellite Weather API & Tourist Spots for ${tripCities.length} cities...
       </div>`;
 
       try {
@@ -969,34 +994,87 @@
           const maxT = Math.round(c.daily.temperature_2m_max[0]);
           const minT = Math.round(c.daily.temperature_2m_min[0]);
           const rainSum = c.daily.precipitation_sum[0] || 0;
-          const packing = [];
-          if (rainSum > 2) packing.push('Umbrella & Raincoat', 'Waterproof shoes');
-          else if (maxT > 30) packing.push('Light cotton clothes', 'Sunscreen SPF50+', 'Sunglasses');
-          else packing.push('Warm sweater/jacket', 'Beanie cap');
+          const code = c.daily.weathercode[0] || 0;
+
+          // Varying Outfit Recommendations based on live temperature and rain
+          const outfit = [];
+          if (rainSum > 2 || code >= 51) {
+            outfit.push('☔ Waterproof Trench Coat', '🌧️ Sturdy Wind-Resistant Umbrella', '🥾 Waterproof Gumboots', '📱 Phone Protection Sleeve');
+          } else if (maxT >= 30) {
+            outfit.push('👕 Light Pure Cotton Shirt/T-Shirt', '🕶️ UV Protection Sunglasses', '🧴 Sunscreen Lotion (SPF 50+)', '🧢 Wide-Brimmed Cotton Hat', '👖 Linen Trousers');
+          } else if (minT <= 16) {
+            outfit.push('🧥 Heavy Woolen Sweater/Jacket', '🧣 Soft Woolen Muffler', '🧤 Insulated Gloves', '🧢 Warm Woolen Beanie', '🧦 Thermal Innerwear');
+          } else {
+            outfit.push('👕 Casual Cotton T-Shirt', '👖 Denim Jeans / Chinos', '👟 Comfortable Walking Sneakers', '🧥 Light Stylish Jacket');
+          }
+
+          // Famous Sightseeing Places to Visit in this city
+          const attractions = getCityAttractions(c.loc.name);
 
           return `
-            <div class="glass-panel p-5 space-y-3">
-              <div class="flex items-center justify-between border-b border-white/10 pb-2">
-                <div class="font-bold text-white text-sm flex items-center gap-1.5">
+            <div class="glass-panel p-5 space-y-4 border border-purple-500/30">
+              <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <div class="font-bold text-white text-base flex items-center gap-2">
                   <span>📍</span> ${c.loc.name}, ${c.loc.country || 'India'}
                 </div>
-                <span class="text-xs text-purple-300 font-bold px-2 py-0.5 bg-purple-500/20 rounded-full border border-purple-500/30">Live Satellite Data</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-purple-300 font-bold px-3 py-1 bg-purple-500/20 rounded-full border border-purple-500/40">Satellite Verified</span>
+                  <button onclick="speakTripCity('${c.loc.name}', ${maxT}, ${minT}, '${outfit.join(', ')}')" class="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-purple-300" title="Listen Audio Guide">🔊</button>
+                </div>
               </div>
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-slate-300">Max/Min Temp: <strong class="text-white">${maxT}°C / ${minT}°C</strong></span>
-                <span class="text-slate-300">Rainfall: <strong class="text-blue-300">${rainSum.toFixed(1)} mm</strong></span>
+
+              <!-- Weather Stats Row -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div class="bg-white/5 p-2.5 rounded-xl border border-white/10">
+                  <span class="text-slate-400 block">Temperature Range</span>
+                  <span class="font-bold text-white text-sm">${maxT}°C / ${minT}°C</span>
+                </div>
+                <div class="bg-white/5 p-2.5 rounded-xl border border-white/10">
+                  <span class="text-slate-400 block">Rainfall Expected</span>
+                  <span class="font-bold text-blue-300 text-sm">${rainSum.toFixed(1)} mm</span>
+                </div>
+                <div class="bg-white/5 p-2.5 rounded-xl border border-white/10 col-span-2 sm:col-span-1">
+                  <span class="text-slate-400 block">Atmospheric Risk</span>
+                  <span class="font-bold text-emerald-400 text-sm">${rainSum > 5 ? 'Rainy Transit' : maxT > 34 ? 'Heat Stress' : 'Favorable Travel'}</span>
+                </div>
               </div>
-              <div class="bg-white/5 p-3 rounded-xl border border-white/10 text-xs space-y-1">
-                <strong class="text-purple-300 block">🧳 Smart Packing Recommendations:</strong>
-                <p class="text-slate-200">${packing.join(' • ')}</p>
+
+              <!-- City-Specific Weather Outfit Guide -->
+              <div class="bg-purple-950/40 p-3.5 rounded-xl border border-purple-500/30 text-xs space-y-1.5">
+                <strong class="text-purple-300 flex items-center gap-1 font-bold">
+                  🧳 City-Specific Weather Outfit & Gear:
+                </strong>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  ${outfit.map(item => `<span class="px-2.5 py-1 bg-purple-500/20 border border-purple-400/30 text-purple-100 rounded-lg font-medium">${item}</span>`).join('')}
+                </div>
+              </div>
+
+              <!-- Sightseeing Places to Visit -->
+              <div class="bg-blue-950/40 p-3.5 rounded-xl border border-blue-500/30 text-xs space-y-1.5">
+                <strong class="text-blue-300 flex items-center gap-1 font-bold">
+                  🏛️ Top Famous Sightseeing Places to Visit in ${c.loc.name}:
+                </strong>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  ${attractions.map(spot => `<span class="px-2.5 py-1 bg-blue-500/20 border border-blue-400/30 text-blue-100 rounded-lg font-medium">🏰 ${spot}</span>`).join('')}
+                </div>
               </div>
             </div>
           `;
         }).join('');
 
       } catch(e) {
-        container.innerHTML = `<div class="p-4 text-xs text-red-400 bg-red-950/40 rounded-xl border border-red-500/30">Failed to load real satellite data for itinerary.</div>`;
+        container.innerHTML = `<div class="p-4 text-xs text-red-400 bg-red-950/40 rounded-xl border border-red-500/30">Failed to load satellite weather for itinerary.</div>`;
       }
+    }
+
+    function speakTripCity(name, maxT, minT, outfitStr) {
+      const text = activeLang === 'hi'
+        ? `${name} का तापमान ${maxT} डिग्री सेल्सियस रहेगा। अनुशंसित परिधान: ${outfitStr}`
+        : `In ${name}, maximum temperature is ${maxT} degrees Celsius. Recommended outfit: ${outfitStr}`;
+      const synth = window.speechSynthesis;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = activeLang === 'hi' ? 'hi-IN' : 'en-US';
+      synth.speak(u);
     }
 
     // Initialize
