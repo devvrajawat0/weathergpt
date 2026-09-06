@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherGPT — AI Climate Platform with Interactive Map, Sightseeing & Trip Planner</title>
+  <title>WeatherGPT — AI Climate Platform with Dynamic City AI Chat, Map & Sightseeing</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Leaflet Maps CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -243,12 +243,18 @@
         <!-- Weather-Tailored Food & Clothing Recommendations -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="glass-panel p-5">
-            <h3 class="font-bold text-white text-sm mb-2" id="lblFoodTitle">🍲 Culinary Picks (Food & Drinks)</h3>
+            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+              <h3 class="font-bold text-white text-sm" id="lblFoodTitle">🍲 Culinary Picks (Food & Drinks)</h3>
+              <span class="text-[10px] text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">Weather Matched</span>
+            </div>
             <div id="foodBox" class="space-y-2 text-xs text-slate-200 bg-white/5 p-3 rounded-xl border border-white/10"></div>
           </div>
 
           <div class="glass-panel p-5">
-            <h3 class="font-bold text-white text-sm mb-2" id="lblClothingTitle">👕 Outfit & Gear Recommendations</h3>
+            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+              <h3 class="font-bold text-white text-sm" id="lblClothingTitle">👕 Outfit & Gear Recommendations</h3>
+              <span class="text-[10px] text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded-full">Weather Matched</span>
+            </div>
             <div id="clothingBox" class="space-y-2 text-xs text-slate-200 bg-white/5 p-3 rounded-xl border border-white/10"></div>
           </div>
         </div>
@@ -260,31 +266,31 @@
         </div>
       </section>
 
-      <!-- TAB 2: AI CHAT ASSISTANT -->
+      <!-- TAB 2: AI CHAT ASSISTANT (DYNAMIC ANY CITY GEOCODING FIX) -->
       <section id="viewChat" class="hidden space-y-4 max-w-4xl mx-auto">
         <div class="glass-panel p-4 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="text-2xl">🤖</span>
             <div>
               <h2 class="font-bold text-white text-sm" id="lblChatHeaderTitle">WeatherGPT AI Assistant</h2>
-              <p class="text-[11px] text-emerald-400" id="lblChatHeaderSub">Ask weather queries or compare multiple cities (e.g. "Compare Gwalior and Leh")</p>
+              <p class="text-[11px] text-emerald-400" id="lblChatHeaderSub">Ask weather queries for ANY city or district (e.g. "Weather in Leh", "Rain in Mumbai", "Compare Delhi and Goa")</p>
             </div>
           </div>
         </div>
 
         <div id="chatMessages" class="glass-panel p-4 h-[60vh] overflow-y-auto space-y-3">
-          <div class="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-100 max-w-[85%]" id="chatWelcomeMsg">
-            🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city, hourly forecast, or multi-city comparison!
+          <div class="bg-emerald-500/20 border border-emerald-500/30 p-3.5 rounded-xl text-xs text-slate-100 max-w-[85%]" id="chatWelcomeMsg">
+            🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city (e.g., "Weather in Leh", "Rain in Mumbai"), hourly forecast, or multi-city comparison!
           </div>
         </div>
 
         <div class="flex gap-2">
-          <input id="chatInput" type="text" placeholder="Ask WeatherGPT AI (e.g. Is it raining in Mumbai?)..." class="flex-1 px-4 py-3 text-sm glass-input placeholder-slate-400" onkeydown="if(event.key==='Enter') sendChatMessage()" />
-          <button id="chatSendBtn" onclick="sendChatMessage()" class="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl">Send</button>
+          <input id="chatInput" type="text" placeholder="Ask WeatherGPT AI (e.g. Weather in Jaipur, Is it raining in Mumbai?)..." class="flex-1 px-4 py-3 text-sm glass-input placeholder-slate-400" onkeydown="if(event.key==='Enter') sendChatMessage()" />
+          <button id="chatSendBtn" onclick="sendChatMessage()" class="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition">Send</button>
         </div>
       </section>
 
-      <!-- TAB 3: TRIP PLANNER WITH CITY-SPECIFIC CLOTHES & TOURIST ATTRACTIONS -->
+      <!-- TAB 3: TRIP PLANNER -->
       <section id="viewTrip" class="hidden space-y-4 max-w-4xl mx-auto">
         <div class="glass-panel p-6">
           <h2 class="font-bold text-white text-base mb-4" id="lblTripTitle">🧭 Weather-Aware Multi-City Trip Planner</h2>
@@ -539,9 +545,9 @@
         clothingTitle: '👕 Outfit & Gear Recommendations',
         farmerTitle: '🌱 Agriculture & Farmer Advisory',
         chatHeaderTitle: 'WeatherGPT AI Assistant',
-        chatHeaderSub: 'Ask weather queries or compare multiple cities (e.g. "Compare Gwalior and Leh")',
-        chatWelcome: '🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city, hourly forecast, or multi-city comparison!',
-        chatPlaceholder: 'Ask WeatherGPT AI (e.g. Is it raining in Mumbai?)...',
+        chatHeaderSub: 'Ask weather queries for ANY city or district (e.g. "Weather in Leh", "Rain in Mumbai", "Compare Delhi and Goa")',
+        chatWelcome: '🤖 Namaste! I am WeatherGPT Assistant. Ask me about weather in any city (e.g., "Weather in Leh", "Rain in Mumbai"), hourly forecast, or multi-city comparison!',
+        chatPlaceholder: 'Ask WeatherGPT AI (e.g. Weather in Jaipur, Is it raining in Mumbai?)...',
         sendBtn: 'Send',
         tripTitle: '🧭 Weather-Aware Multi-City Trip Planner',
         tripInputHeader: 'Add Destinations (Real Satellite Weather & Sightseeing Places)',
@@ -577,9 +583,9 @@
         clothingTitle: '👕 वेशभूषा एवं पहनावा सुझाव',
         farmerTitle: '🌱 कृषि एवं किसान सलाह',
         chatHeaderTitle: 'मौसमGPT एआई सहायक',
-        chatHeaderSub: 'मौसम संबंधी प्रश्न पूछें या शहरों की तुलना करें (जैसे: ग्वालियर और लेह की तुलना)',
+        chatHeaderSub: 'किसी भी शहर के मौसम के बारे में पूछें (जैसे: लेह का मौसम, मुंबई में बारिश)',
         chatWelcome: '🤖 नमस्ते! मैं मौसमGPT सहायक हूँ। मुझसे किसी भी शहर के मौसम, प्रति घंटे पूर्वानुमान, या तुलना के बारे में पूछें!',
-        chatPlaceholder: 'मौसमGPT एआई से पूछें (जैसे: क्या मुंबई में बारिश हो रही है?)...',
+        chatPlaceholder: 'मौसमGPT एआई से पूछें (जैसे: जयपुर का मौसम, मुंबई में बारिश)...',
         sendBtn: 'भेजें',
         tripTitle: '🧭 मौसम-आधारित बहु-शहर यात्रा योजनाकार',
         tripInputHeader: 'गंतव्य शहर जोड़ें (उपग्रह मौसम एवं दर्शनीय स्थल)',
@@ -897,13 +903,20 @@
       const text = activeLang === 'hi'
         ? `वर्तमान में ${currentGeo.name} में तापमान ${Math.round(c.temperature_2m)} डिग्री सेल्सियस है। आर्द्रता ${c.relative_humidity_2m} प्रतिशत है।`
         : `In ${currentGeo.name}, temperature is ${Math.round(c.temperature_2m)} degrees Celsius. Humidity is ${c.relative_humidity_2m} percent.`;
-      const synth = window.speechSynthesis;
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = activeLang === 'hi' ? 'hi-IN' : 'en-US';
-      synth.speak(u);
+      speakTextDirect(text);
     }
 
-    // AI Chat System
+    function speakTextDirect(text) {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = activeLang === 'hi' ? 'hi-IN' : 'en-US';
+      window.speechSynthesis.speak(u);
+    }
+
+    // ----------------------------------------------------
+    // DYNAMIC ANY-CITY AI CHAT ENGINE (FIXED GWALIOR BUG)
+    // ----------------------------------------------------
     async function sendChatMessage() {
       const input = document.getElementById('chatInput');
       const text = input.value.trim();
@@ -913,21 +926,84 @@
       container.innerHTML += `<div class="bg-blue-600 text-white p-3 rounded-xl text-xs max-w-[85%] ml-auto">${text}</div>`;
       input.value = '';
 
-      let reply = '';
-      if (text.toLowerCase().includes('compare') || text.includes('तुलना')) {
-        reply = activeLang === 'hi'
-          ? `तुलना: वर्तमान में ग्वालियर में तापमान ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C और AQI 42 है, जबकि लेह में तापमान 12°C और AQI 18 है। ग्वालियर, लेह से अधिक गर्म है।`
-          : `Comparison Analysis: Currently, Gwalior is ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C with AQI 42, while Leh is 12°C with AQI 18. Gwalior is significantly warmer than Leh.`;
-      } else {
-        reply = activeLang === 'hi'
-          ? `${currentGeo.name} में वर्तमान तापमान ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C है और आर्द्रता ${currentWeatherData.raw.current.relative_humidity_2m}% है। मौसम अनुकूल रहने का अनुमान है।`
-          : `In ${currentGeo.name}, current temperature is ${Math.round(currentWeatherData.raw.current.temperature_2m)}°C with ${currentWeatherData.raw.current.relative_humidity_2m}% humidity. Satellite models forecast smooth weather over the next 24 hours.`;
-      }
+      const typingId = 'typing-' + Date.now();
+      container.innerHTML += `<div id="${typingId}" class="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-300 max-w-[85%] flex items-center gap-2">🤖 <span class="animate-pulse">${activeLang==='hi'?'उपग्रह मौसम मॉडल से जानकारी प्राप्त की जा रही है...':'Querying live satellite climate models...'}</span></div>`;
+      container.scrollTop = container.scrollHeight;
 
-      setTimeout(() => {
-        container.innerHTML += `<div class="bg-emerald-500/20 border border-emerald-500/30 p-3 rounded-xl text-xs text-slate-100 max-w-[85%]">🤖 ${reply}</div>`;
+      try {
+        // Extract city candidates from user input query
+        const cleanText = text.replace(/[?,!.]/g, '');
+        const words = cleanText.split(/\s+/);
+        const ignoreWords = ['weather', 'what', 'how', 'is', 'the', 'in', 'at', 'today', 'tomorrow', 'forecast', 'rain', 'temperature', 'compare', 'and', 'between', 'for', 'like', 'in', 'of', 'tell', 'me', 'about', 'city', 'district', 'मौसम', 'कैसा', 'है', 'में', 'बताओ', 'का'];
+
+        const candidates = words.filter(w => w.length > 2 && !ignoreWords.includes(w.toLowerCase()));
+
+        let targetCities = [];
+        for (const cand of candidates.slice(0, 3)) {
+          try {
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cand)}&count=1`).then(r => r.json());
+            if (geoRes.results && geoRes.results.length > 0) {
+              const loc = geoRes.results[0];
+              if (!targetCities.some(c => c.name.toLowerCase() === loc.name.toLowerCase())) {
+                targetCities.push(loc);
+              }
+            }
+          } catch(e) {}
+        }
+
+        // If no city detected in message, use active dashboard city
+        if (targetCities.length === 0) {
+          targetCities.push(currentGeo);
+        }
+
+        // Fetch live satellite weather for ALL target cities
+        const weatherDataList = await Promise.all(targetCities.map(async (loc) => {
+          const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,uv_index&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+          const aUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.latitude}&longitude=${loc.longitude}&current=us_aqi`;
+          const [wRes, aRes] = await Promise.all([
+            fetch(wUrl).then(r => r.json()),
+            fetch(aUrl).then(r => r.json()).catch(() => null)
+          ]);
+          return { loc, current: wRes.current, daily: wRes.daily, aqi: aRes?.current?.us_aqi || 42 };
+        }));
+
+        const typingElem = document.getElementById(typingId);
+        if (typingElem) typingElem.remove();
+
+        let replyText = '';
+        if (weatherDataList.length > 1) {
+          // Multi-City Comparison
+          const c1 = weatherDataList[0];
+          const c2 = weatherDataList[1];
+          if (activeLang === 'hi') {
+            replyText = `मौसम तुलना: ${c1.loc.name} में वर्तमान तापमान ${Math.round(c1.current.temperature_2m)}°C (अनुभूत ${Math.round(c1.current.apparent_temperature)}°C) और AQI ${c1.aqi} है। वहीं ${c2.loc.name} में तापमान ${Math.round(c2.current.temperature_2m)}°C और AQI ${c2.aqi} है। ${c1.current.temperature_2m > c2.current.temperature_2m ? `${c1.loc.name}, ${c2.loc.name} से ${Math.round(c1.current.temperature_2m - c2.current.temperature_2m)}°C अधिक गर्म है।` : `${c2.loc.name}, ${c1.loc.name} से ${Math.round(c2.current.temperature_2m - c1.current.temperature_2m)}°C अधिक गर्म है।`}`;
+          } else {
+            replyText = `Comparison Analysis: In ${c1.loc.name}, current temperature is ${Math.round(c1.current.temperature_2m)}°C (feels like ${Math.round(c1.current.apparent_temperature)}°C) with AQI ${c1.aqi}. In comparison, ${c2.loc.name} is ${Math.round(c2.current.temperature_2m)}°C with AQI ${c2.aqi}. ${c1.current.temperature_2m > c2.current.temperature_2m ? `${c1.loc.name} is ${Math.round(c1.current.temperature_2m - c2.current.temperature_2m)}°C warmer than ${c2.loc.name}.` : `${c2.loc.name} is ${Math.round(c2.current.temperature_2m - c1.current.temperature_2m)}°C warmer than ${c1.loc.name}.`}`;
+          }
+        } else {
+          // Single City Live Report
+          const w = weatherDataList[0];
+          const maxT = Math.round(w.daily.temperature_2m_max[0]);
+          const minT = Math.round(w.daily.temperature_2m_min[0]);
+          const rainSum = w.daily.precipitation_sum[0] || 0;
+
+          if (activeLang === 'hi') {
+            replyText = `${w.loc.name} (${w.loc.country || 'भारत'}) का लाइव मौसम: वर्तमान तापमान ${Math.round(w.current.temperature_2m)}°C (अनुभूत ${Math.round(w.current.apparent_temperature)}°C) है। अधिकतम: ${maxT}°C, न्यूनतम: ${minT}°C। हवा की गति ${w.current.wind_speed_10m} किमी/घंटा, आर्द्रता ${w.current.relative_humidity_2m}% और वायु गुणवत्ता (AQI) ${w.aqi} है। ${rainSum > 1 ? `आज ${rainSum.toFixed(1)} मिमी वर्षा का अनुमान है।` : 'आज मौसम साफ़ रहने का अनुमान है।'}`;
+          } else {
+            replyText = `Live Weather for ${w.loc.name}, ${w.loc.country || 'India'}: Current temperature is ${Math.round(w.current.temperature_2m)}°C (feels like ${Math.round(w.current.apparent_temperature)}°C). Today's High: ${maxT}°C, Low: ${minT}°C. Wind speed: ${w.current.wind_speed_10m} km/h, Humidity: ${w.current.relative_humidity_2m}%, AQI: ${w.aqi}. ${rainSum > 1 ? `Precipitation of ${rainSum.toFixed(1)} mm expected today.` : 'Clear skies forecast for today.'}`;
+          }
+        }
+
+        const escapeReply = replyText.replace(/'/g, "\\'");
+        container.innerHTML += `<div class="bg-emerald-500/20 border border-emerald-500/30 p-3.5 rounded-xl text-xs text-slate-100 max-w-[85%] space-y-2">
+          <p>🤖 ${replyText}</p>
+          <button onclick="speakTextDirect('${escapeReply}')" class="text-[11px] text-emerald-400 font-bold hover:underline flex items-center gap-1 mt-1">🔊 ${activeLang==='hi'?'आवाज़ सुनें':'Listen Audio Response'}</button>
+        </div>`;
         container.scrollTop = container.scrollHeight;
-      }, 400);
+
+      } catch(e) {
+        console.error('Chat error', e);
+      }
     }
 
     // ----------------------------------------------------
@@ -1071,10 +1147,7 @@
       const text = activeLang === 'hi'
         ? `${name} का तापमान ${maxT} डिग्री सेल्सियस रहेगा। अनुशंसित परिधान: ${outfitStr}`
         : `In ${name}, maximum temperature is ${maxT} degrees Celsius. Recommended outfit: ${outfitStr}`;
-      const synth = window.speechSynthesis;
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = activeLang === 'hi' ? 'hi-IN' : 'en-US';
-      synth.speak(u);
+      speakTextDirect(text);
     }
 
     // Initialize
